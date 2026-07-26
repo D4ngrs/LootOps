@@ -2748,7 +2748,43 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     return Array.from(decls.entries()).map(function(e){ return e[0] + ': ' + e[1] + ';'; }).join(' ');
   }
 
-  window.DesignModePatch = { mergeDeclarations: mergeDeclarations };
+  function findTagByAttr(htmlText, attrName, attrValue){
+    const escapedVal = attrValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const attrRe = new RegExp('\\s' + attrName + '=["\']' + escapedVal + '["\']');
+    const attrMatch = attrRe.exec(htmlText);
+    if (!attrMatch) return null;
+    const tagStart = htmlText.lastIndexOf('<', attrMatch.index);
+    if (tagStart === -1) return null;
+    const closeIdx = htmlText.indexOf('>', attrMatch.index);
+    if (closeIdx === -1) return null;
+    const tagEnd = closeIdx + 1;
+    const tagText = htmlText.slice(tagStart, tagEnd);
+    const nameMatch = /^<([a-zA-Z][a-zA-Z0-9-]*)/.exec(tagText);
+    return { tagStart: tagStart, tagEnd: tagEnd, tagText: tagText, tagName: nameMatch ? nameMatch[1] : null };
+  }
+
+  function patchElementStyleAttr(htmlText, attrName, attrValue, propsObject){
+    const tag = findTagByAttr(htmlText, attrName, attrValue);
+    if (!tag) return null;
+    const styleRe = /\sstyle=["']([^"']*)["']/;
+    const styleMatch = styleRe.exec(tag.tagText);
+    const existing = styleMatch ? styleMatch[1] : '';
+    const merged = mergeDeclarations(existing, propsObject);
+    let newTagText;
+    if (styleMatch){
+      newTagText = tag.tagText.slice(0, styleMatch.index) +
+        ' style="' + merged + '"' +
+        tag.tagText.slice(styleMatch.index + styleMatch[0].length);
+    } else {
+      const selfClosing = /\/>$/.test(tag.tagText);
+      const closeMarker = selfClosing ? '/>' : '>';
+      const prefix = tag.tagText.slice(0, tag.tagText.length - closeMarker.length).replace(/\s+$/, '');
+      newTagText = prefix + ' style="' + merged + '"' + (selfClosing ? ' ' : '') + closeMarker;
+    }
+    return htmlText.slice(0, tag.tagStart) + newTagText + htmlText.slice(tag.tagEnd);
+  }
+
+  window.DesignModePatch = { mergeDeclarations: mergeDeclarations, findTagByAttr: findTagByAttr, patchElementStyleAttr: patchElementStyleAttr };
 })();
 </script>
 <script id="designModeScript">
