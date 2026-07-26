@@ -2731,5 +2731,37 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   updateJumpBtn();
 })();
 </script>
+<script id="designModeScript">
+(function(){
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+
+  const DesignMode = { active: false, changeLog: [], _fileHandle: null, _dmIdCounter: 0 };
+
+  function enable(){
+    DesignMode.active = true;
+    document.body.classList.add('dm-active');
+  }
+
+  function disable(){
+    DesignMode.active = false;
+    document.body.classList.remove('dm-active');
+  }
+
+  function toggle(){
+    DesignMode.active ? disable() : enable();
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e')){
+      e.preventDefault();
+      toggle();
+    }
+  });
+
+  DesignMode.enable = enable;
+  DesignMode.disable = disable;
+  window.DesignMode = DesignMode;
+})();
+</script>
 </body>
 </html>
