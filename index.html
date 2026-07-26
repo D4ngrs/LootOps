@@ -2731,6 +2731,26 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   updateJumpBtn();
 })();
 </script>
+<script id="designModePatchLib">
+(function(){
+  function mergeDeclarations(declText, propsObject){
+    const decls = new Map();
+    (declText || '').split(';').forEach(function(part){
+      const idx = part.indexOf(':');
+      if (idx === -1) return;
+      const prop = part.slice(0, idx).trim();
+      const val = part.slice(idx + 1).trim();
+      if (prop) decls.set(prop, val);
+    });
+    Object.keys(propsObject).forEach(function(prop){
+      decls.set(prop, String(propsObject[prop]));
+    });
+    return Array.from(decls.entries()).map(function(e){ return e[0] + ': ' + e[1] + ';'; }).join(' ');
+  }
+
+  window.DesignModePatch = { mergeDeclarations: mergeDeclarations };
+})();
+</script>
 <script id="designModeScript">
 (function(){
   if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
