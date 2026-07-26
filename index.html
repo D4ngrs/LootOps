@@ -3062,6 +3062,24 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     return { attrName: 'data-dm-id', attrValue: value };
   }
 
+  function undo(){
+    const entry = DesignMode.changeLog.pop();
+    if (!entry) return;
+    if (entry.type === 'text'){
+      const tag = document.querySelector('[' + entry.attrName + '="' + entry.attrValue + '"]');
+      if (tag) tag.textContent = entry.previousValue;
+      return;
+    }
+    if (entry.scope === 'element'){
+      const tag = document.querySelector('[' + entry.attrName + '="' + entry.attrValue + '"]');
+      if (tag) tag.style.setProperty(entry.property, entry.previousValue);
+    } else {
+      document.querySelectorAll('.' + entry.className).forEach(function(elm){
+        elm.style.setProperty(entry.property, entry.previousValue);
+      });
+    }
+  }
+
   document.addEventListener('keydown', function(e){
     if(e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e')){
       e.preventDefault();
@@ -3069,10 +3087,20 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     }
   });
 
+  document.addEventListener('keydown', function(e){
+    if (!DesignMode.active) return;
+    if (!(e.ctrlKey && (e.key === 'z' || e.key === 'Z'))) return;
+    const activeTag = document.activeElement ? document.activeElement.tagName : '';
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+    e.preventDefault();
+    undo();
+  });
+
   DesignMode.enable = enable;
   DesignMode.disable = disable;
   DesignMode.ensureDmId = ensureDmId;
   DesignMode.applyEdit = applyEdit;
+  DesignMode.undo = undo;
   window.DesignMode = DesignMode;
 })();
 </script>
