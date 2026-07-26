@@ -714,10 +714,12 @@
     border:1px solid var(--bad);
     border-radius:4px;
     padding:5px 12px;
-    margin-bottom:24px;
+    margin-bottom:8px;
     opacity:.8;
   }
   #denyRetryBtn{
+    display:block;
+    margin:8px auto 0;
     background:transparent;
     color:var(--text);
     border:1px solid var(--line);
@@ -842,8 +844,8 @@
       </svg>
     </div>
     <div class="denied-title">ACCESS DENIED</div>
-    <div class="denied-sub">AUTHENTICATION FAILURE — INVALID CREDENTIALS</div>
-    <div class="denied-code">ERR_AUTH_0x1A</div>
+    <div class="denied-sub">AUTHENTICATION FAILURE<br>INVALID CREDENTIALS</div>
+    <div class="denied-code">ERR_AUTH_0x1AH00P5F4ULT</div>
     <button type="button" id="denyRetryBtn">Try again</button>
     <div class="hazard-stripe"></div>
   </div>
