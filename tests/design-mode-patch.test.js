@@ -81,3 +81,28 @@ test('patchElementText returns null when the target is not found', () => {
   const result = P.patchElementText('<span id="a">x</span>', 'id', 'b', 'y');
   assert.equal(result, null);
 });
+
+test('patchStyleRule merges a new property into an existing rule, preserving others', () => {
+  const P = loadPatchLib();
+  const css = '.ghost-btn{ color: red; padding: 4px; }';
+  const result = P.patchStyleRule(css, '.ghost-btn', { color: 'blue' });
+  assert.match(result, /\.ghost-btn\{/);
+  assert.match(result, /color: blue;/);
+  assert.match(result, /padding: 4px;/);
+});
+
+test('patchStyleRule appends a new rule block when the selector is not present', () => {
+  const P = loadPatchLib();
+  const css = '.other{ color: red; }';
+  const result = P.patchStyleRule(css, '.ghost-btn', { color: 'blue' });
+  assert.match(result, /\.other\{ color: red; \}/);
+  assert.match(result, /\.ghost-btn\{\s*color: blue;\s*\}/);
+});
+
+test('patchStyleRule handles selectors with regex special characters', () => {
+  const P = loadPatchLib();
+  const css = '.ghost-btn.danger{ color: red; }';
+  const result = P.patchStyleRule(css, '.ghost-btn.danger', { color: 'blue' });
+  assert.match(result, /color: blue;/);
+  assert.doesNotMatch(result, /color: red;/);
+});

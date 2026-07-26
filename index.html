@@ -2796,7 +2796,30 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     return htmlText.slice(0, tag.tagEnd) + escaped + htmlText.slice(closeIdx);
   }
 
-  window.DesignModePatch = { mergeDeclarations: mergeDeclarations, findTagByAttr: findTagByAttr, patchElementStyleAttr: patchElementStyleAttr, patchElementText: patchElementText };
+  function findRuleBlock(cssText, selector){
+    const escapedSel = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp('(^|\\})\\s*' + escapedSel + '\\s*\\{');
+    const match = re.exec(cssText);
+    if (!match) return null;
+    const bodyStart = match.index + match[0].length;
+    const bodyEnd = cssText.indexOf('}', bodyStart);
+    if (bodyEnd === -1) return null;
+    return { bodyStart: bodyStart, bodyEnd: bodyEnd };
+  }
+
+  function patchStyleRule(cssText, selector, propsObject){
+    const rule = findRuleBlock(cssText, selector);
+    if (rule){
+      const existing = cssText.slice(rule.bodyStart, rule.bodyEnd);
+      const merged = mergeDeclarations(existing, propsObject);
+      return cssText.slice(0, rule.bodyStart) + ' ' + merged + ' ' + cssText.slice(rule.bodyEnd);
+    }
+    const newDecl = mergeDeclarations('', propsObject);
+    const separator = cssText.endsWith('\n') ? '' : '\n';
+    return cssText + separator + selector + '{ ' + newDecl + ' }\n';
+  }
+
+  window.DesignModePatch = { mergeDeclarations: mergeDeclarations, findTagByAttr: findTagByAttr, patchElementStyleAttr: patchElementStyleAttr, patchElementText: patchElementText, patchStyleRule: patchStyleRule };
 })();
 </script>
 <script id="designModeScript">
