@@ -2784,7 +2784,19 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     return htmlText.slice(0, tag.tagStart) + newTagText + htmlText.slice(tag.tagEnd);
   }
 
-  window.DesignModePatch = { mergeDeclarations: mergeDeclarations, findTagByAttr: findTagByAttr, patchElementStyleAttr: patchElementStyleAttr };
+  function patchElementText(htmlText, attrName, attrValue, newText){
+    const tag = findTagByAttr(htmlText, attrName, attrValue);
+    if (!tag || !tag.tagName) return null;
+    const closeTagStr = '</' + tag.tagName + '>';
+    const closeIdx = htmlText.indexOf(closeTagStr, tag.tagEnd);
+    if (closeIdx === -1) return null;
+    const escaped = String(newText).replace(/[&<>]/g, function(c){
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
+    });
+    return htmlText.slice(0, tag.tagEnd) + escaped + htmlText.slice(closeIdx);
+  }
+
+  window.DesignModePatch = { mergeDeclarations: mergeDeclarations, findTagByAttr: findTagByAttr, patchElementStyleAttr: patchElementStyleAttr, patchElementText: patchElementText };
 })();
 </script>
 <script id="designModeScript">

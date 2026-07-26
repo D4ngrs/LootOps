@@ -61,3 +61,23 @@ test('patchElementStyleAttr returns null when the target is not found', () => {
   const result = P.patchElementStyleAttr('<div id="a"></div>', 'id', 'b', { color: 'red' });
   assert.equal(result, null);
 });
+
+test('patchElementText replaces the inner text of a leaf element', () => {
+  const P = loadPatchLib();
+  const html = '<button id="rollBtn">Old text</button>';
+  const result = P.patchElementText(html, 'id', 'rollBtn', 'New text');
+  assert.equal(result, '<button id="rollBtn">New text</button>');
+});
+
+test('patchElementText escapes &, <, > in the new text', () => {
+  const P = loadPatchLib();
+  const html = '<span id="lbl">x</span>';
+  const result = P.patchElementText(html, 'id', 'lbl', 'A < B & C > D');
+  assert.equal(result, '<span id="lbl">A &lt; B &amp; C &gt; D</span>');
+});
+
+test('patchElementText returns null when the target is not found', () => {
+  const P = loadPatchLib();
+  const result = P.patchElementText('<span id="a">x</span>', 'id', 'b', 'y');
+  assert.equal(result, null);
+});
