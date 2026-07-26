@@ -3037,6 +3037,10 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     document.body.appendChild(highlightEl);
     document.addEventListener('mousemove', onMouseMove);
     buildInspectorDom();
+    if (!isSaveSupported()){
+      document.getElementById('dmSaveBtn').disabled = true;
+      document.getElementById('dmSaveNote').textContent = 'Direct save requires Chrome, served from localhost.';
+    }
     document.addEventListener('click', onDocClick, true);
   }
 
@@ -3095,6 +3099,64 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     e.preventDefault();
     undo();
   });
+
+  function isSaveSupported(){
+    return typeof window.showOpenFilePicker === 'function';
+  }
+
+  async function connectFile(){
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }]
+    });
+    DesignMode._fileHandle = handle;
+    const note = document.getElementById('dmSaveNote');
+    if (handle.name !== 'index.html' && note){
+      note.textContent = 'Warning: connected file is "' + handle.name + '", not index.html';
+    }
+    return handle;
+  }
+
+  function applyPatchEntry(text, entry){
+    const P = window.DesignModePatch;
+    if (entry.type === 'text'){
+      return P.patchElementText(text, entry.attrName, entry.attrValue, entry.value);
+    }
+    if (entry.scope === 'class'){
+      const props = {};
+      props[entry.property] = entry.value;
+      return P.patchStyleRule(text, '.' + entry.className, props);
+    }
+    const props = {};
+    props[entry.property] = entry.value;
+    return P.patchElementStyleAttr(text, entry.attrName, entry.attrValue, props);
+  }
+
+  async function save(){
+    const note = document.getElementById('dmSaveNote');
+    try {
+      const handle = DesignMode._fileHandle || await connectFile();
+      const file = await handle.getFile();
+      let text = await file.text();
+      for (const entry of DesignMode.changeLog){
+        const patched = applyPatchEntry(text, entry);
+        if (patched === null){
+          if (note) note.textContent = 'Save failed: file changed on disk. Reload and retry.';
+          return;
+        }
+        text = patched;
+      }
+      const writable = await handle.createWritable();
+      await writable.write(text);
+      await writable.close();
+      DesignMode.changeLog = [];
+      if (note) note.textContent = 'Saved ✓';
+    } catch (err){
+      if (note) note.textContent = 'Save failed: ' + err.message;
+    }
+  }
+
+  DesignMode.connectFile = connectFile;
+  DesignMode.save = save;
 
   DesignMode.enable = enable;
   DesignMode.disable = disable;
