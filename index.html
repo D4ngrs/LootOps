@@ -998,6 +998,20 @@ const APP_VERSION = 'v0.9.2';
     z-index:99998;
     display:none;
   }
+  #dmInspector{
+    position:fixed; top:12px; right:12px; width:260px; max-height:90vh; overflow:auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px;
+    z-index:99999; font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text);
+    display:none;
+  }
+  #dmInspector .dm-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; }
+  #dmInspector label{ color:var(--muted); }
+  #dmInspector input, #dmInspector select{ width:120px; }
+  .dm-hidden{ display:none !important; }
+  #dmScopePrompt{ margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+  #dmScopePrompt button{ margin-right:6px; }
+  #dmSaveRow{ margin-top:10px; }
+  #dmSaveNote{ display:block; margin-top:4px; color:var(--muted); font-size:11px; }
 </style>
 </head>
 <body>
@@ -2854,6 +2868,127 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     highlightEl.style.height = r.height + 'px';
   }
 
+  const FIELD_PROP_MAP = {
+    dmFieldBg: 'background-color',
+    dmFieldColor: 'color',
+    dmFieldBorderColor: 'border-color',
+    dmFieldMargin: 'margin',
+    dmFieldPadding: 'padding',
+    dmFieldGap: 'gap',
+    dmFieldFontSize: 'font-size',
+    dmFieldFontWeight: 'font-weight',
+    dmFieldBorderWidth: 'border-width',
+    dmFieldBorderStyle: 'border-style',
+    dmFieldBorderRadius: 'border-radius'
+  };
+  const PX_FIELDS = ['dmFieldMargin', 'dmFieldPadding', 'dmFieldGap', 'dmFieldFontSize', 'dmFieldBorderWidth', 'dmFieldBorderRadius'];
+
+  let inspectorEl = null;
+  let selectedEl = null;
+
+  function camelCase(prop){
+    return prop.replace(/-([a-z])/g, function(_, c){ return c.toUpperCase(); });
+  }
+
+  function rgbToHex(rgb){
+    const m = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
+    if (!m) return '#000000';
+    return '#' + [1, 2, 3].map(function(i){ return Number(m[i]).toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function buildInspectorDom(){
+    inspectorEl = document.createElement('div');
+    inspectorEl.id = 'dmInspector';
+    inspectorEl.innerHTML =
+      '<div class="dm-row"><label>Text</label><input type="text" id="dmFieldText"></div>' +
+      '<div class="dm-row"><label>Background</label><input type="color" id="dmFieldBg"></div>' +
+      '<div class="dm-row"><label>Text color</label><input type="color" id="dmFieldColor"></div>' +
+      '<div class="dm-row"><label>Border color</label><input type="color" id="dmFieldBorderColor"></div>' +
+      '<div class="dm-row"><label>Margin (px)</label><input type="number" id="dmFieldMargin"></div>' +
+      '<div class="dm-row"><label>Padding (px)</label><input type="number" id="dmFieldPadding"></div>' +
+      '<div class="dm-row"><label>Gap (px)</label><input type="number" id="dmFieldGap"></div>' +
+      '<div class="dm-row"><label>Font size (px)</label><input type="number" id="dmFieldFontSize"></div>' +
+      '<div class="dm-row"><label>Font weight</label><select id="dmFieldFontWeight">' +
+        '<option value="400">400</option><option value="500">500</option><option value="600">600</option><option value="700">700</option>' +
+      '</select></div>' +
+      '<div class="dm-row"><label>Border width (px)</label><input type="number" id="dmFieldBorderWidth"></div>' +
+      '<div class="dm-row"><label>Border style</label><select id="dmFieldBorderStyle">' +
+        '<option value="solid">solid</option><option value="dashed">dashed</option><option value="dotted">dotted</option><option value="none">none</option>' +
+      '</select></div>' +
+      '<div class="dm-row"><label>Border radius (px)</label><input type="number" id="dmFieldBorderRadius"></div>' +
+      '<div id="dmScopePrompt" class="dm-hidden"></div>' +
+      '<div id="dmSaveRow"><button type="button" id="dmSaveBtn">Save</button><span id="dmSaveNote"></span></div>';
+    document.body.appendChild(inspectorEl);
+    inspectorEl.addEventListener('input', onInspectorInput);
+    document.getElementById('dmSaveBtn').addEventListener('click', function(){ DesignMode.save(); });
+  }
+
+  function removeInspectorDom(){
+    if (inspectorEl){ inspectorEl.remove(); inspectorEl = null; }
+    selectedEl = null;
+  }
+
+  function populateInspector(el){
+    selectedEl = el;
+    const cs = getComputedStyle(el);
+    const textField = document.getElementById('dmFieldText');
+    textField.disabled = el.children.length !== 0;
+    textField.value = el.children.length === 0 ? el.textContent : '';
+    document.getElementById('dmFieldBg').value = rgbToHex(cs.backgroundColor);
+    document.getElementById('dmFieldColor').value = rgbToHex(cs.color);
+    document.getElementById('dmFieldBorderColor').value = rgbToHex(cs.borderColor);
+    document.getElementById('dmFieldMargin').value = parseInt(cs.marginTop) || 0;
+    document.getElementById('dmFieldPadding').value = parseInt(cs.paddingTop) || 0;
+    document.getElementById('dmFieldGap').value = parseInt(cs.gap) || 0;
+    document.getElementById('dmFieldFontSize').value = parseInt(cs.fontSize) || 0;
+    document.getElementById('dmFieldFontWeight').value = String(cs.fontWeight);
+    document.getElementById('dmFieldBorderWidth').value = parseInt(cs.borderTopWidth) || 0;
+    document.getElementById('dmFieldBorderStyle').value = cs.borderTopStyle;
+    document.getElementById('dmFieldBorderRadius').value = parseInt(cs.borderTopLeftRadius) || 0;
+    inspectorEl.style.display = 'block';
+  }
+
+  function onDocClick(e){
+    const el = e.target;
+    if (isOwnUi(el)) return;
+    e.preventDefault();
+    populateInspector(el);
+  }
+
+  function finalizeEdit(attrName, attrValue, property, value, previousValue, scope, className){
+    DesignMode.changeLog.push({
+      type: property ? 'style' : 'text',
+      attrName: attrName, attrValue: attrValue,
+      property: property, value: value, previousValue: previousValue,
+      scope: scope, className: className
+    });
+  }
+
+  function applyEdit(el, property, value){
+    const idInfo = DesignMode.ensureDmId(el);
+    if (property === 'text'){
+      const previous = el.textContent;
+      el.textContent = value;
+      finalizeEdit(idInfo.attrName, idInfo.attrValue, undefined, value, previous, 'element', null);
+      return;
+    }
+    const previous = el.style.getPropertyValue(property) || getComputedStyle(el)[camelCase(property)];
+    el.style.setProperty(property, value);
+    finalizeEdit(idInfo.attrName, idInfo.attrValue, property, value, previous, 'element', null);
+  }
+
+  function onInspectorInput(e){
+    const field = e.target;
+    if (field.id === 'dmFieldText'){
+      applyEdit(selectedEl, 'text', field.value);
+      return;
+    }
+    const prop = FIELD_PROP_MAP[field.id];
+    if (!prop) return;
+    const value = PX_FIELDS.indexOf(field.id) !== -1 ? field.value + 'px' : field.value;
+    applyEdit(selectedEl, prop, value);
+  }
+
   function enable(){
     DesignMode.active = true;
     document.body.classList.add('dm-active');
@@ -2861,13 +2996,17 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     highlightEl.id = 'dmHighlight';
     document.body.appendChild(highlightEl);
     document.addEventListener('mousemove', onMouseMove);
+    buildInspectorDom();
+    document.addEventListener('click', onDocClick, true);
   }
 
   function disable(){
     DesignMode.active = false;
     document.body.classList.remove('dm-active');
     document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('click', onDocClick, true);
     if (highlightEl){ highlightEl.remove(); highlightEl = null; }
+    removeInspectorDom();
   }
 
   function toggle(){
@@ -2893,6 +3032,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   DesignMode.enable = enable;
   DesignMode.disable = disable;
   DesignMode.ensureDmId = ensureDmId;
+  DesignMode.applyEdit = applyEdit;
   window.DesignMode = DesignMode;
 })();
 </script>
