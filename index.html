@@ -3045,6 +3045,11 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   }
 
   function disable(){
+    if (DesignMode.changeLog.length > 0){
+      const ok = window.confirm('Discard ' + DesignMode.changeLog.length + ' unsaved change(s)?');
+      if (!ok) return;
+      DesignMode.changeLog = [];
+    }
     DesignMode.active = false;
     document.body.classList.remove('dm-active');
     document.removeEventListener('mousemove', onMouseMove);
