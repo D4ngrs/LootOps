@@ -990,6 +990,14 @@ const APP_VERSION = 'v0.9.2';
     .grid{min-width:0;}
     .wiki-search-row{min-width:0;}
   }
+  #dmHighlight{
+    position:fixed;
+    pointer-events:none;
+    border:2px solid var(--violet);
+    background:rgba(124,111,240,0.08);
+    z-index:99998;
+    display:none;
+  }
 </style>
 </head>
 <body>
@@ -2828,14 +2836,38 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
 
   const DesignMode = { active: false, changeLog: [], _fileHandle: null, _dmIdCounter: 0 };
 
+  let highlightEl = null;
+
+  function isOwnUi(el){
+    return !!el.closest('#dmHighlight, #dmInspector, #dmScopePrompt');
+  }
+
+  function onMouseMove(e){
+    if (!highlightEl) return;
+    const el = e.target;
+    if (isOwnUi(el)){ highlightEl.style.display = 'none'; return; }
+    const r = el.getBoundingClientRect();
+    highlightEl.style.display = 'block';
+    highlightEl.style.left = r.left + 'px';
+    highlightEl.style.top = r.top + 'px';
+    highlightEl.style.width = r.width + 'px';
+    highlightEl.style.height = r.height + 'px';
+  }
+
   function enable(){
     DesignMode.active = true;
     document.body.classList.add('dm-active');
+    highlightEl = document.createElement('div');
+    highlightEl.id = 'dmHighlight';
+    document.body.appendChild(highlightEl);
+    document.addEventListener('mousemove', onMouseMove);
   }
 
   function disable(){
     DesignMode.active = false;
     document.body.classList.remove('dm-active');
+    document.removeEventListener('mousemove', onMouseMove);
+    if (highlightEl){ highlightEl.remove(); highlightEl = null; }
   }
 
   function toggle(){
