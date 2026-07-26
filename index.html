@@ -2842,6 +2842,15 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     DesignMode.active ? disable() : enable();
   }
 
+  function ensureDmId(el){
+    if (el.id) return { attrName: 'id', attrValue: el.id };
+    if (el.dataset.dmId) return { attrName: 'data-dm-id', attrValue: el.dataset.dmId };
+    DesignMode._dmIdCounter += 1;
+    const value = 'dm-' + DesignMode._dmIdCounter;
+    el.dataset.dmId = value;
+    return { attrName: 'data-dm-id', attrValue: value };
+  }
+
   document.addEventListener('keydown', function(e){
     if(e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e')){
       e.preventDefault();
@@ -2851,6 +2860,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
 
   DesignMode.enable = enable;
   DesignMode.disable = disable;
+  DesignMode.ensureDmId = ensureDmId;
   window.DesignMode = DesignMode;
 })();
 </script>
