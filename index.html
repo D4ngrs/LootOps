@@ -2964,6 +2964,41 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     });
   }
 
+  function findGoverningClass(el, property){
+    if (!el.className || typeof el.className !== 'string') return null;
+    const classes = el.className.trim().split(/\s+/).filter(Boolean);
+    const camel = camelCase(property);
+    for (const sheet of document.styleSheets){
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { continue; }
+      for (const rule of rules){
+        if (!rule.selectorText || !rule.style) continue;
+        const matchedClass = classes.find(function(c){ return rule.selectorText.indexOf('.' + c) !== -1; });
+        if (!matchedClass) continue;
+        if (!el.matches(rule.selectorText)) continue;
+        if (rule.style[camel]) return { selector: '.' + matchedClass, className: matchedClass };
+      }
+    }
+    return null;
+  }
+
+  function showScopePrompt(property, value, previous, idInfo, governing){
+    const box = document.getElementById('dmScopePrompt');
+    box.classList.remove('dm-hidden');
+    const count = document.querySelectorAll(governing.selector).length;
+    box.innerHTML = 'Apply to: ' +
+      '<button type="button" id="dmScopeElBtn">this element only</button>' +
+      '<button type="button" id="dmScopeClassBtn">all ' + governing.selector + ' (' + count + ')</button>';
+    document.getElementById('dmScopeElBtn').onclick = function(){
+      finalizeEdit(idInfo.attrName, idInfo.attrValue, property, value, previous, 'element', null);
+      box.classList.add('dm-hidden');
+    };
+    document.getElementById('dmScopeClassBtn').onclick = function(){
+      finalizeEdit(null, null, property, value, previous, 'class', governing.className);
+      box.classList.add('dm-hidden');
+    };
+  }
+
   function applyEdit(el, property, value){
     const idInfo = DesignMode.ensureDmId(el);
     if (property === 'text'){
@@ -2974,7 +3009,12 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     }
     const previous = el.style.getPropertyValue(property) || getComputedStyle(el)[camelCase(property)];
     el.style.setProperty(property, value);
-    finalizeEdit(idInfo.attrName, idInfo.attrValue, property, value, previous, 'element', null);
+    const governing = findGoverningClass(el, property);
+    if (governing){
+      showScopePrompt(property, value, previous, idInfo, governing);
+    } else {
+      finalizeEdit(idInfo.attrName, idInfo.attrValue, property, value, previous, 'element', null);
+    }
   }
 
   function onInspectorInput(e){
