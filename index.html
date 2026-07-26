@@ -117,6 +117,7 @@
   .entry-input:focus{border-color:var(--violet);}
   #nameEntry::placeholder{font-size:11.5px;}
   .name-warning{color:var(--bad); font-size:11px; margin-top:2px; min-height:13px;}
+  .hint-mobile-only{display:none;}
   .hint{color:var(--muted); font-size:11.5px; margin-top:auto; padding-top:10px; line-height:1.5;}
 
   .entry-list{
@@ -803,6 +804,8 @@
       padding:0 14px;
       cursor:pointer;
     }
+    .hint-desktop-only{display:none;}
+    .hint-mobile-only{display:block;}
     .hist-rows-grid{grid-template-columns:1fr; gap:2px;}
     .hist-entry .hist-row{font-size:11px;}
     .hist-entry .hist-time{font-size:12px;}
@@ -906,7 +909,8 @@
       </div>
       <div class="name-warning" id="nameWarning"></div>
       <ul class="entry-list" id="namesList"></ul>
-      <div class="hint">Type and press Enter to add.<br>Click × to remove.</div>
+      <div class="hint hint-desktop-only">Type and press Enter to add.<br>Click × to remove.</div>
+      <div class="hint hint-mobile-only">Type and press Enter or tap Add to add.<br>Tap × to remove.</div>
     </div>
     <div class="panel items">
       <div class="panel-label">
@@ -934,7 +938,8 @@
       <div class="name-warning"></div>
 
       <ul class="entry-list" id="itemsList"></ul>
-      <div class="hint">Search to add from the wiki, or type a custom name and press Enter. Adjust the number to the amount of items.</div>
+      <div class="hint hint-desktop-only">Search to add from the wiki, or type a custom name and press Enter. Adjust the number to the amount of items.</div>
+      <div class="hint hint-mobile-only">Search to add from the wiki, or type a custom name and press Enter or tap Add. Adjust the number to the amount of items.</div>
     </div>
   </div>
 
