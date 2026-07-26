@@ -1269,7 +1269,7 @@ document.getElementById('footerVersion').textContent = APP_VERSION;
 // actual access control (e.g. a leaked link), put real auth in front of this at the
 // hosting layer instead (e.g. Cloudflare Access).
 (function(){
-  const PASSWORD_HASH = '85cd65f0445f5f4e5a8f5948d5b2a610488f50dd491226b597b6c097e3797df2'; // sha256("R4v3nh4ll") — the password itself is never stored
+  const PASSWORD_HASH = '85cd65f0445f5f4e5a8f5948d5b2a610488f50dd491226b597b6c097e3797df2'; // SHA-256 hash — the actual password is never stored in this file
   const AUTH_KEY = 'lootops_auth_v1';
   const SESSION_MS = 10 * 24 * 60 * 60 * 1000; // 10 days
 
