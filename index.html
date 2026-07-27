@@ -537,6 +537,8 @@ const APP_VERSION = 'v0.8.1';
   #rollBtn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(232,163,61,0.25);}
   #rollBtn:active{transform:translateY(0px);}
   #rollBtn:disabled{opacity:.6; cursor:default; transform:none; box-shadow:none;}
+  #undoRollBtn{display:flex; align-items:center; gap:6px;}
+  #undoRollBtn.hidden{display:none;}
 
   /* Dark/inert until a roll exists, then flips to the exact same gold treatment as
      Roll — the color is the signal that there's now something to share. */
@@ -1587,6 +1589,7 @@ const APP_VERSION = 'v0.8.1';
   </div>
 
   <div class="roll-row">
+    <button id="undoRollBtn" type="button" class="ghost-btn hidden">↺ Undo last roll</button>
     <button id="rollBtn">Roll</button>
     <button id="shareBtn" type="button" disabled aria-label="Share result">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
