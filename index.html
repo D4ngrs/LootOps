@@ -2989,6 +2989,30 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     return null;
   }
 
+  let liveStyleEl = null;
+
+  function ensureLiveStyle(){
+    if (!liveStyleEl){
+      liveStyleEl = document.createElement('style');
+      liveStyleEl.id = 'dmLiveOverrides';
+      document.head.appendChild(liveStyleEl);
+    }
+    return liveStyleEl;
+  }
+
+  function rebuildLiveOverrides(){
+    const P = window.DesignModePatch;
+    let css = '';
+    DesignMode.changeLog.forEach(function(entry){
+      if (entry.type === 'style' && entry.scope === 'class'){
+        const props = {};
+        props[entry.property] = entry.value;
+        css = P.patchStyleRule(css, '.' + entry.className, props);
+      }
+    });
+    ensureLiveStyle().textContent = css;
+  }
+
   function showScopePrompt(property, value, previous, idInfo, governing){
     const box = document.getElementById('dmScopePrompt');
     box.classList.remove('dm-hidden');
@@ -3001,10 +3025,9 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       box.classList.add('dm-hidden');
     };
     document.getElementById('dmScopeClassBtn').onclick = function(){
-      document.querySelectorAll(governing.selector).forEach(function(elm){
-        elm.style.setProperty(property, value);
-      });
+      selectedEl.style.removeProperty(property);
       finalizeEdit(null, null, property, value, previous, 'class', governing.className);
+      rebuildLiveOverrides();
       box.classList.add('dm-hidden');
     };
   }
@@ -3093,9 +3116,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       const tag = document.querySelector('[' + entry.attrName + '="' + entry.attrValue + '"]');
       if (tag) tag.style.setProperty(entry.property, entry.previousValue);
     } else {
-      document.querySelectorAll('.' + entry.className).forEach(function(elm){
-        elm.style.setProperty(entry.property, entry.previousValue);
-      });
+      rebuildLiveOverrides();
     }
   }
 
