@@ -2009,6 +2009,7 @@ const rollTitleInput = document.getElementById('rollTitle');
 const resetBtn = document.getElementById('resetBtn');
 const discordStatusEl = document.getElementById('discordStatus');
 const shareBtn = document.getElementById('shareBtn');
+const undoRollBtn = document.getElementById('undoRollBtn');
 let lastRollResult = null; // { title, names, buckets, itemsSnapshot } from the most recent roll — feeds the Share modal
 
 // Keeps the page from scrolling behind an open modal — scrolling should only
@@ -2944,8 +2945,14 @@ function createHistoryEntryDiv(entry){
   return div;
 }
 
+function updateUndoButtonVisibility(){
+  const entries = loadHistory();
+  undoRollBtn.classList.toggle('hidden', entries.length === 0 || loadLastRollUndone());
+}
+
 function renderHistory(){
   const entries = loadHistory();
+  updateUndoButtonVisibility();
   document.getElementById('histCount').textContent = entries.length;
   const clearBtn = document.getElementById('clearHistoryBtn');
   clearBtn.disabled = entries.length === 0;
