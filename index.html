@@ -830,6 +830,31 @@ const APP_VERSION = 'v0.8.1';
   .modal-status.ok{color:var(--gold);}
   .modal-status.err{color:var(--bad);}
 
+  /* Small popup used in place of the browser's native confirm() — deliberately a lot
+     smaller than the regular .modal-panel (which is sized for real content like the
+     Share card or Discord settings), since this only ever holds one line of text and
+     two buttons. */
+  .confirm-panel{max-width:320px; padding:20px;}
+  .confirm-message{font-size:13px; line-height:1.5; color:var(--text); margin-bottom:18px;}
+  .confirm-actions{display:flex; justify-content:flex-end; gap:8px;}
+  .confirm-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    border-radius:6px;
+    padding:8px 14px;
+    cursor:pointer;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--muted);
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .confirm-cancel:hover{border-color:var(--violet); color:var(--text);}
+  /* Red by default (not just on hover) since this button always confirms a
+     destructive action — matches #clearHistoryBtn/.ghost-btn.danger's hover color,
+     just always-on here rather than hover-only. */
+  .confirm-ok{border-color:var(--bad); color:var(--bad);}
+  .confirm-ok:hover{background:rgba(232,99,106,0.12); color:var(--text);}
+
   .primary-btn{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
@@ -1480,6 +1505,16 @@ const APP_VERSION = 'v0.8.1';
     </div>
   </div>
 
+  <div class="modal-overlay hidden" id="confirmOverlay">
+    <div class="modal-panel confirm-panel">
+      <div class="confirm-message" id="confirmMessage"></div>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-btn confirm-cancel" id="confirmCancelBtn">Cancel</button>
+        <button type="button" class="confirm-btn confirm-ok" id="confirmOkBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="panel names">
       <div class="panel-label">Names <span class="count" id="nameCount">0</span></div>
@@ -1923,8 +1958,8 @@ const RAVENHALL_LOGO_SRC = (function(){
   denyRetryBtn.addEventListener('click', showLoginForm);
 
   if(logoutBtn){
-    logoutBtn.addEventListener('click', () => {
-      if(!confirm('Log out on this device? You\'ll need the access code again next time.')) return;
+    logoutBtn.addEventListener('click', async () => {
+      if(!await confirmModal('Log out on this device? You\'ll need the access code again next time.', 'Log out')) return;
       try { localStorage.removeItem(AUTH_KEY); } catch(e){}
       location.reload();
     });
@@ -1967,6 +2002,41 @@ function unlockBodyScroll(){
   openModalCount = Math.max(0, openModalCount - 1);
   if(openModalCount === 0) document.body.style.overflow = '';
 }
+
+// ---- Confirm popup ----
+// A themed stand-in for the browser's native confirm(), used for every destructive
+// action (log out, reset, clear history, remove webhook, discard Design Mode
+// changes). Unlike confirm(), this can't block execution while waiting for a click,
+// so callers await confirmModal(message) instead of reading a return value directly.
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmMessageEl = document.getElementById('confirmMessage');
+const confirmOkBtn = document.getElementById('confirmOkBtn');
+const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+let resolveConfirm = null;
+
+function confirmModal(message, confirmLabel){
+  confirmMessageEl.textContent = message;
+  confirmOkBtn.textContent = confirmLabel || 'Confirm';
+  confirmOverlay.classList.remove('hidden');
+  lockBodyScroll();
+  return new Promise(resolve => { resolveConfirm = resolve; });
+}
+function settleConfirm(result){
+  if(!resolveConfirm) return; // already settled (e.g. Escape then a stray click)
+  confirmOverlay.classList.add('hidden');
+  unlockBodyScroll();
+  const resolve = resolveConfirm;
+  resolveConfirm = null;
+  resolve(result);
+}
+confirmOkBtn.addEventListener('click', () => settleConfirm(true));
+confirmCancelBtn.addEventListener('click', () => settleConfirm(false));
+confirmOverlay.addEventListener('click', e => {
+  if(e.target === confirmOverlay) settleConfirm(false);
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && !confirmOverlay.classList.contains('hidden')) settleConfirm(false);
+});
 
 let namesArr = [];       // array of strings
 let itemsArr = [];       // array of { name, qty, meta, label }
@@ -2043,8 +2113,8 @@ nameEntry.addEventListener('keydown', e => {
 });
 document.getElementById('nameAddBtn').addEventListener('click', commitNameEntry);
 
-resetBtn.addEventListener('click', () => {
-  if(!confirm('Reset names, items, and the roll title? This clears the current setup (your saved Discord webhook and roll history are kept).')) return;
+resetBtn.addEventListener('click', async () => {
+  if(!await confirmModal('Reset names, items, and the roll title? This clears the current setup (your saved Discord webhook and roll history are kept).', 'Reset')) return;
   namesArr = [];
   itemsArr = [];
   rollTitleInput.value = '';
@@ -2894,8 +2964,8 @@ function logRoll(names, buckets, leftover, title, when, itemsSnapshot){
   if(!historyOverlay.classList.contains('hidden')) renderHistoryModalList();
 }
 
-document.getElementById('clearHistoryBtn').addEventListener('click', () => {
-  if(confirm('Clear all saved roll history? This can\'t be undone.')){
+document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+  if(await confirmModal('Clear all saved roll history? This can\'t be undone.', 'Clear history')){
     saveHistory([]);
     renderHistory();
   }
@@ -3121,8 +3191,8 @@ saveWebhookBtn.addEventListener('click', () => {
   refreshDiscordWarning();
 });
 
-clearWebhookBtn.addEventListener('click', () => {
-  if(!confirm('Remove the saved Discord webhook?')) return;
+clearWebhookBtn.addEventListener('click', async () => {
+  if(!await confirmModal('Remove the saved Discord webhook?', 'Remove')) return;
   clearWebhookUrl();
   webhookUrlInput.value = '';
   setWebhookStatus('Webhook removed.');
@@ -4031,10 +4101,10 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     document.addEventListener('click', onDocClick, true);
   }
 
-  function disable(){
+  async function disable(){
     resolvePendingScope();
     if (DesignMode.changeLog.length > 0){
-      const ok = window.confirm('Discard ' + DesignMode.changeLog.length + ' unsaved change(s)?');
+      const ok = await confirmModal('Discard ' + DesignMode.changeLog.length + ' unsaved change(s)?', 'Discard');
       if (!ok) return;
       DesignMode.changeLog = [];
     }
