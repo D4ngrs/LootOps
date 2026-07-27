@@ -212,13 +212,15 @@ const APP_VERSION = 'v0.9.2';
     flex:0 0 165px;
     width:165px;
     display:block;
+    overflow:hidden;
   }
   #itemsList .entry-name-text,
   #itemsList .entry-detail-text{
     display:block;
     width:100%;
-    white-space:normal;
-    overflow-wrap:break-word;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
   #itemsList .entry-detail-text{margin-top:1px;}
   .trailing-controls{
@@ -1747,6 +1749,20 @@ document.addEventListener('click', (e) => {
 itemsListEl.addEventListener('scroll', closeQualityPopover);
 window.addEventListener('resize', closeQualityPopover);
 
+const ITEM_NAME_MAX_FONT = 12.5;
+const ITEM_NAME_MIN_FONT = 9;
+const ITEM_NAME_COLUMN_WIDTH = 161; // 165px column minus a small safety margin
+let itemNameMeasureCtx = null;
+
+function fitNameFontSize(text){
+  if(!itemNameMeasureCtx) itemNameMeasureCtx = document.createElement('canvas').getContext('2d');
+  for(let size = ITEM_NAME_MAX_FONT; size > ITEM_NAME_MIN_FONT; size -= 0.5){
+    itemNameMeasureCtx.font = '700 ' + size + 'px "IBM Plex Mono", monospace';
+    if(itemNameMeasureCtx.measureText(text).width <= ITEM_NAME_COLUMN_WIDTH) return size;
+  }
+  return ITEM_NAME_MIN_FONT;
+}
+
 function renderItemsList(){
   closeQualityPopover();
   itemsListEl.innerHTML = '';
@@ -1761,6 +1777,7 @@ function renderItemsList(){
     const nameText = document.createElement('span');
     nameText.className = 'entry-name-text';
     nameText.textContent = item.displayName || item.name;
+    nameText.style.fontSize = fitNameFontSize(nameText.textContent) + 'px';
     nameSpan.appendChild(nameText);
 
     if(item.detail){
