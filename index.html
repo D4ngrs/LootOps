@@ -922,6 +922,22 @@ const APP_VERSION = 'v0.8.1';
   .changelog-more-hint.hidden{opacity:0;}
   .changelog-more-hint svg{width:14px; height:14px; color:var(--muted);}
 
+  /* Same idea, mirrored at the top -- fades in once there's content scrolled out of
+     view above the fold, so a mid-scroll position reads as "cut off on both ends"
+     rather than only ever hinting at more content below. No chevron here, just the
+     fade, since a chevron pointing up at the modal title would look like it's part
+     of the header rather than a scroll hint. */
+  .changelog-top-hint{
+    position:absolute;
+    left:0; right:8px; top:0;
+    height:24px;
+    background:linear-gradient(to top, transparent, var(--panel));
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .changelog-top-hint.visible{opacity:1;}
+
   /* ---- Share result modal ---- */
   .share-modal-panel{max-width:744px;}
   .share-card-wrap{display:flex; justify-content:center; overflow-x:auto;}
@@ -1465,6 +1481,7 @@ const APP_VERSION = 'v0.8.1';
         <button type="button" class="modal-close" id="closeChangelogBtn">×</button>
       </div>
       <div class="changelog-scroll-wrap">
+        <div class="changelog-top-hint" id="changelogTopHint"></div>
         <div class="changelog-scroll" id="changelogList"></div>
         <div class="changelog-more-hint hidden" id="changelogMoreHint">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -3047,6 +3064,7 @@ const changelogBtn = document.getElementById('changelogBtn');
 const closeChangelogBtn = document.getElementById('closeChangelogBtn');
 const changelogListEl = document.getElementById('changelogList');
 const changelogMoreHint = document.getElementById('changelogMoreHint');
+const changelogTopHint = document.getElementById('changelogTopHint');
 
 function renderChangelogList(){
   changelogListEl.innerHTML = '';
@@ -3079,6 +3097,7 @@ let changelogScrollHideTimer = null;
 function updateChangelogMoreHint(){
   const atBottom = changelogListEl.scrollTop + changelogListEl.clientHeight >= changelogListEl.scrollHeight - CHANGELOG_NEAR_BOTTOM_PX;
   changelogMoreHint.classList.toggle('hidden', atBottom);
+  changelogTopHint.classList.toggle('visible', changelogListEl.scrollTop > CHANGELOG_NEAR_BOTTOM_PX);
 }
 changelogListEl.addEventListener('scroll', () => {
   updateChangelogMoreHint();
