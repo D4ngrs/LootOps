@@ -380,20 +380,7 @@ const APP_VERSION = 'v0.9.2';
   }
   .qty-arrow:hover::before{border-color:var(--text);}
   .entry-row-item .qty-input:focus{border-color:#E8A33D;}
-  .info-link{
-    flex:0 0 auto;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    color:var(--muted);
-    text-decoration:none;
-    font-size:13px;
-    line-height:1;
-    transition:color .15s ease;
-  }
+  .info-link{ flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; color: var(--muted); text-decoration: none; font-size: 13px; line-height: 1; transition: color .15s ease; padding: 10px; }
   .info-link:hover{color:var(--gold);}
   .entry-remove{
     flex:0 0 auto;
@@ -2929,6 +2916,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   }
 
   function populateInspector(el){
+    resolvePendingScope();
     selectedEl = el;
     const cs = getComputedStyle(el);
     const textField = document.getElementById('dmFieldText');
@@ -3008,7 +2996,18 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     ensureLiveStyle().textContent = css;
   }
 
-  function showScopePrompt(property, value, previous, idInfo, governing){
+  let pendingScope = null;
+
+  function resolvePendingScope(){
+    if (!pendingScope) return;
+    const p = pendingScope;
+    pendingScope = null;
+    finalizeEdit(p.idInfo.attrName, p.idInfo.attrValue, p.property, p.value, p.previous, 'element', null);
+    document.getElementById('dmScopePrompt').classList.add('dm-hidden');
+  }
+
+  function showScopePrompt(el, property, value, previous, idInfo, governing){
+    pendingScope = { el: el, property: property, value: value, previous: previous, idInfo: idInfo };
     const box = document.getElementById('dmScopePrompt');
     box.classList.remove('dm-hidden');
     const count = document.querySelectorAll(governing.selector).length;
@@ -3016,11 +3015,13 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       '<button type="button" id="dmScopeElBtn">this element only</button>' +
       '<button type="button" id="dmScopeClassBtn">all ' + governing.selector + ' (' + count + ')</button>';
     document.getElementById('dmScopeElBtn').onclick = function(){
+      pendingScope = null;
       finalizeEdit(idInfo.attrName, idInfo.attrValue, property, value, previous, 'element', null);
       box.classList.add('dm-hidden');
     };
     document.getElementById('dmScopeClassBtn').onclick = function(){
-      selectedEl.style.removeProperty(property);
+      pendingScope = null;
+      el.style.removeProperty(property);
       finalizeEdit(null, null, property, value, previous, 'class', governing.className);
       rebuildLiveOverrides();
       box.classList.add('dm-hidden');
@@ -3028,6 +3029,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   }
 
   function applyEdit(el, property, value){
+    resolvePendingScope();
     const idInfo = DesignMode.ensureDmId(el);
     if (property === 'text'){
       const previous = el.textContent;
@@ -3039,7 +3041,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     el.style.setProperty(property, value);
     const governing = findGoverningClass(el, property);
     if (governing){
-      showScopePrompt(property, value, previous, idInfo, governing);
+      showScopePrompt(el, property, value, previous, idInfo, governing);
     } else {
       finalizeEdit(idInfo.attrName, idInfo.attrValue, property, value, previous, 'element', null);
     }
@@ -3073,6 +3075,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
   }
 
   function disable(){
+    resolvePendingScope();
     if (DesignMode.changeLog.length > 0){
       const ok = window.confirm('Discard ' + DesignMode.changeLog.length + ' unsaved change(s)?');
       if (!ok) return;
