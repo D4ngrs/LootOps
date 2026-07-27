@@ -3173,19 +3173,26 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       const handle = DesignMode._fileHandle || await connectFile();
       const file = await handle.getFile();
       let text = await file.text();
+      const skipped = [];
+      let appliedCount = 0;
       for (const entry of DesignMode.changeLog){
         const patched = applyPatchEntry(text, entry);
         if (patched === null){
-          if (note) note.textContent = 'Save failed: file changed on disk. Reload and retry.';
-          return;
+          skipped.push(entry);
+          continue;
         }
         text = patched;
+        appliedCount += 1;
       }
       const writable = await handle.createWritable();
       await writable.write(text);
       await writable.close();
-      DesignMode.changeLog = [];
-      if (note) note.textContent = 'Saved ✓';
+      DesignMode.changeLog = skipped;
+      if (note){
+        note.textContent = skipped.length === 0
+          ? 'Saved ✓'
+          : 'Saved ' + appliedCount + ' change(s); ' + skipped.length + ' skipped (not found in file — likely a dynamically-generated element that can only be previewed, not saved).';
+      }
     } catch (err){
       if (note) note.textContent = 'Save failed: ' + err.message;
     }
