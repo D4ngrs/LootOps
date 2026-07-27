@@ -16,11 +16,11 @@ It's a loot-distribution tool for a Star Citizen org: participants ("names") and
   ```js
   const APP_VERSION = 'v0.9.2';
   ```
-  Bump this when shipping a user-visible change; it's displayed on the login screen and page footer.
+  It's displayed on the login screen and page footer. **Do not bump this, and do not add/edit a `CHANGELOG_ENTRIES` entry, unless the user explicitly asks for it** — even right after shipping a user-visible change. When asked to write one: plain language (no jargon), never address the user directly ("you"/"your"), prefix each bullet with `Added:`/`Changed:`/`Fixed:`, only list real user-facing impact, and give genuinely new features (`Added:`) 1-2 sentences of real detail rather than a generic one-liner — routine fixes/tweaks stay short.
 
 ## Architecture (single file, roughly top-to-bottom)
 
-1. **`<style>` block** — all CSS, using CSS custom properties defined on `:root` (`--bg`, `--panel`, `--gold`, `--violet`, `--teal`, `--text`, `--muted`, `--bad`) for the dark theme.
+1. **`<style>` block** — all CSS, using CSS custom properties defined on `:root` (`--bg`, `--panel`, `--gold`, `--violet`, `--text`, `--muted`, `--bad`) for the dark theme.
 2. **`<body>` markup** — in order: login gate (`#loginGate`), boot/logo overlay (`#bootOverlay`), then the main app (`.wrap`): header, Discord webhook settings modal, history modal, the Names/Items two-panel grid, roll options, roll button, results, and roll history.
 3. **`<script>` block(s)** at the bottom contain all logic. Key areas, in file order:
    - **Boot sequence** — decodes and plays an embedded GIF logo via a hand-rolled GIF parser/LZW decoder (`parseGIF`, `lzwDecode`, `playGIF`) before revealing the app.
