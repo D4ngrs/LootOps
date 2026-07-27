@@ -752,6 +752,10 @@ const APP_VERSION = 'v0.8.0';
     border-radius:8px;
     padding:10px 14px;
   }
+  /* Major-release outline only shows up once a version is no longer current -- the
+     current version's own gold outline (below) always wins, since it comes later in
+     the cascade at the same specificity. */
+  .changelog-entry.major{border-color:var(--violet);}
   .changelog-entry.current{border-color:var(--gold);}
   .changelog-entry .changelog-version{
     font-family:'IBM Plex Mono', monospace;
@@ -2864,6 +2868,7 @@ document.addEventListener('keydown', e => {
 const CHANGELOG_ENTRIES = [
   {
     version: 'v0.8.0',
+    major: true,
     changes: [
       'Added: Share Result. Export a finished roll as an image styled like a Discord embed, ready to download or copy straight into a Discord message. Winners are ranked by how much they won and arranged into two balanced columns, and anyone who received no loot is left off the image.'
     ]
@@ -2911,7 +2916,7 @@ function renderChangelogList(){
   changelogListEl.innerHTML = '';
   CHANGELOG_ENTRIES.forEach((entry, i) => {
     const card = document.createElement('div');
-    card.className = 'changelog-entry' + (i === 0 ? ' current' : '');
+    card.className = 'changelog-entry' + (i === 0 ? ' current' : '') + (entry.major ? ' major' : '');
     const version = document.createElement('div');
     version.className = 'changelog-version';
     version.textContent = entry.version;
