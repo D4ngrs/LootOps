@@ -537,7 +537,8 @@ const APP_VERSION = 'v0.8.1';
   #rollBtn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(232,163,61,0.25);}
   #rollBtn:active{transform:translateY(0px);}
   #rollBtn:disabled{opacity:.6; cursor:default; transform:none; box-shadow:none;}
-  #undoRollBtn{display:flex; align-items:center; gap:6px;}
+  #undoRollBtn{display:flex; align-items:center; gap:6px; border-color:var(--bad); color:var(--bad);}
+  #undoRollBtn:hover{background:rgba(232,99,106,0.12); color:var(--text);}
   #undoRollBtn.hidden{display:none;}
 
   /* Dark/inert until a roll exists, then flips to the exact same gold treatment as
@@ -856,6 +857,14 @@ const APP_VERSION = 'v0.8.1';
      just always-on here rather than hover-only. */
   .confirm-ok{border-color:var(--bad); color:var(--bad);}
   .confirm-ok:hover{background:rgba(232,99,106,0.12); color:var(--text);}
+
+  .reason-actions{flex-direction:column; align-items:stretch;}
+  .reason-actions.hidden{display:none;}
+  .reason-actions .confirm-btn{text-align:center;}
+  .reason-other{margin-top:12px;}
+  .reason-other.hidden{display:none;}
+  .reason-other .entry-input{width:100%; margin-bottom:10px; box-sizing:border-box;}
+  .reason-other .confirm-actions{justify-content:flex-end;}
 
   .primary-btn{
     font-family:'IBM Plex Mono', monospace;
@@ -1534,6 +1543,25 @@ const APP_VERSION = 'v0.8.1';
     </div>
   </div>
 
+  <div class="modal-overlay hidden" id="undoReasonOverlay">
+    <div class="modal-panel confirm-panel">
+      <div class="confirm-message">Undo the last roll?</div>
+      <div class="confirm-actions reason-actions" id="undoReasonList">
+        <button type="button" class="confirm-btn confirm-ok" id="undoReasonNameBtn">Wrong / missing name</button>
+        <button type="button" class="confirm-btn confirm-ok" id="undoReasonItemBtn">Wrong / missing item</button>
+        <button type="button" class="confirm-btn confirm-ok" id="undoReasonOtherBtn">Other</button>
+        <button type="button" class="confirm-btn confirm-cancel" id="undoReasonCancelBtn">Cancel</button>
+      </div>
+      <div class="reason-other hidden" id="undoReasonOtherView">
+        <input type="text" class="entry-input" id="undoReasonOtherInput" placeholder="Describe the reason…" autocomplete="off">
+        <div class="confirm-actions">
+          <button type="button" class="confirm-btn confirm-cancel" id="undoReasonBackBtn">Back</button>
+          <button type="button" class="confirm-btn confirm-ok" id="undoReasonOtherConfirmBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="panel names">
       <div class="panel-label">Names <span class="count" id="nameCount">0</span></div>
@@ -2057,6 +2085,66 @@ confirmOverlay.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape' && !confirmOverlay.classList.contains('hidden')) settleConfirm(false);
+});
+
+// ---- Undo reason popup ----
+// Purpose-built (rather than a generalized confirmModal) so the undo flow can offer
+// canned reasons plus a free-text "Other" without complicating confirmModal's other
+// callers (Reset, Clear History, remove webhook, discard Design Mode changes).
+const undoReasonOverlay = document.getElementById('undoReasonOverlay');
+const undoReasonList = document.getElementById('undoReasonList');
+const undoReasonOtherView = document.getElementById('undoReasonOtherView');
+const undoReasonOtherInput = document.getElementById('undoReasonOtherInput');
+const undoReasonNameBtn = document.getElementById('undoReasonNameBtn');
+const undoReasonItemBtn = document.getElementById('undoReasonItemBtn');
+const undoReasonOtherBtn = document.getElementById('undoReasonOtherBtn');
+const undoReasonCancelBtn = document.getElementById('undoReasonCancelBtn');
+const undoReasonBackBtn = document.getElementById('undoReasonBackBtn');
+const undoReasonOtherConfirmBtn = document.getElementById('undoReasonOtherConfirmBtn');
+let resolveUndoReason = null;
+
+function showUndoReasonList(){
+  undoReasonOtherInput.value = '';
+  undoReasonOtherView.classList.add('hidden');
+  undoReasonList.classList.remove('hidden');
+}
+
+function undoReasonModal(){
+  showUndoReasonList();
+  undoReasonOverlay.classList.remove('hidden');
+  lockBodyScroll();
+  return new Promise(resolve => { resolveUndoReason = resolve; });
+}
+function settleUndoReason(result){
+  if(!resolveUndoReason) return; // already settled (e.g. Escape then a stray click)
+  undoReasonOverlay.classList.add('hidden');
+  unlockBodyScroll();
+  const resolve = resolveUndoReason;
+  resolveUndoReason = null;
+  resolve(result);
+}
+undoReasonNameBtn.addEventListener('click', () => settleUndoReason('Wrong / missing name'));
+undoReasonItemBtn.addEventListener('click', () => settleUndoReason('Wrong / missing item'));
+undoReasonCancelBtn.addEventListener('click', () => settleUndoReason(null));
+undoReasonOtherBtn.addEventListener('click', () => {
+  undoReasonList.classList.add('hidden');
+  undoReasonOtherView.classList.remove('hidden');
+  undoReasonOtherInput.focus();
+});
+undoReasonBackBtn.addEventListener('click', showUndoReasonList);
+function confirmUndoReasonOther(){
+  const text = undoReasonOtherInput.value.trim();
+  settleUndoReason(text || 'Other');
+}
+undoReasonOtherConfirmBtn.addEventListener('click', confirmUndoReasonOther);
+undoReasonOtherInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); confirmUndoReasonOther(); }
+});
+undoReasonOverlay.addEventListener('click', e => {
+  if(e.target === undoReasonOverlay) settleUndoReason(null);
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && !undoReasonOverlay.classList.contains('hidden')) settleUndoReason(null);
 });
 
 let namesArr = [];       // array of strings
@@ -3334,12 +3422,13 @@ async function postRollToDiscord(url, data){
   }
 }
 
-async function postUndoToDiscord(url, entry){
+async function postUndoToDiscord(url, entry, reason){
   const embed = {
     title: 'Roll Undone',
     color: EMBED_COLOR_UNDO,
     fields: [
       { name: 'Roll', value: escDiscord(entry.title || 'Untitled Roll'), inline: false },
+      { name: 'Reason', value: escDiscord(reason), inline: false },
       { name: 'Originally Posted', value: escDiscord(entry.when), inline: false }
     ]
   };
@@ -3411,7 +3500,8 @@ rollBtn.addEventListener('click', () => {
 });
 
 undoRollBtn.addEventListener('click', async () => {
-  if(!await confirmModal('Undo the last roll? This removes it from history.', 'Undo last roll')) return;
+  const reason = await undoReasonModal();
+  if(reason === null) return;
 
   const entries = loadHistory();
   const entry = entries.pop();
@@ -3430,7 +3520,7 @@ undoRollBtn.addEventListener('click', async () => {
 
   if(entry.postedToDiscord){
     const webhookUrl = loadWebhookUrl();
-    if(webhookUrl) postUndoToDiscord(webhookUrl, entry);
+    if(webhookUrl) postUndoToDiscord(webhookUrl, entry, reason);
   }
 });
 
