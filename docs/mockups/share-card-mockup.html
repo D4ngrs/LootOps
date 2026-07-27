@@ -1,0 +1,356 @@
+<title>LootOps — Share Image Mockup</title>
+<style>
+  :root{
+    --bg:#14151A;
+    --panel:#1D1F26;
+    --panel-2:#23252E;
+    --line:#31333F;
+    --gold:#E8A33D;
+    --violet:#7C6FF0;
+    --text:#EDEDED;
+    --muted:#8A8F98;
+    --page-bg:#0E0F13;
+    --page-fg:#8A8F98;
+  }
+  :root[data-theme="light"]{
+    --page-bg:#EDEDED;
+    --page-fg:#4B4F58;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --page-bg:#EDEDED;
+      --page-fg:#4B4F58;
+    }
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--page-bg);
+    color:var(--page-fg);
+    font-family:'IBM Plex Mono', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:48px 20px 80px;
+    gap:22px;
+  }
+
+  .page-head{max-width:640px; text-align:center;}
+  .page-head h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:.04em;
+    color:var(--page-fg);
+    margin:0 0 6px;
+  }
+  .page-head p{
+    font-size:11.5px;
+    line-height:1.6;
+    margin:0;
+    opacity:.75;
+  }
+  .page-head .tag{
+    display:inline-block;
+    font-size:9.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    border:1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+    border-radius:999px;
+    padding:3px 10px;
+    margin-bottom:10px;
+  }
+
+  /* ---- the actual mockup: LootOps' real card styling, reproduced ---- */
+  .card{
+    position:relative;
+    width:680px;
+    max-width:100%;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:24px 26px 20px;
+    box-shadow:0 24px 70px rgba(0,0,0,0.45);
+  }
+
+  .card-head-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:9px;}
+
+  .card-actions{display:flex; gap:6px; flex:0 0 auto;}
+  .pill-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:5px 10px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .pill-btn svg{width:13px; height:13px; flex:0 0 auto;}
+  .pill-btn:hover{border-color:var(--gold); color:var(--gold); background:rgba(232,163,61,0.08);}
+  .pill-btn.copy:hover{border-color:var(--violet); color:var(--violet); background:rgba(124,111,240,0.08);}
+  .pill-btn:focus-visible{outline:2px solid var(--violet); outline-offset:2px;}
+
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .eyebrow .dot{width:5px; height:5px; border-radius:50%; background:var(--gold);}
+
+  .title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    color:var(--text);
+    margin:0 0 6px;
+  }
+
+  .meta{
+    font-size:11.5px;
+    color:var(--muted);
+    margin-bottom:16px;
+  }
+
+  /* Each .entry-row holds exactly 2 participants (2 columns, fixed) — the list only
+     grows by adding more of these rows, never by adding columns. Height is fixed
+     and identical across every row, same principle as the app's own entry lists:
+     overflow gets truncated with an ellipsis rather than wrapping or stretching
+     the row taller. */
+  .entries{
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .entry-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    height:52px; /* tall enough for the item line + a smaller category line beneath it, still fixed and identical for every row */
+  }
+  .entry-row:nth-child(odd){background:var(--panel-2);}
+  .entry-row:nth-child(even){background:var(--panel);}
+  .entry-row:not(:last-child){border-bottom:1px solid var(--line);}
+
+  .cell{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+    padding:0 14px;
+    font-size:12.5px;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .cell:first-child{border-right:1px solid var(--line);}
+  .cell.empty{visibility:hidden;}
+
+  .cell .name{
+    color:var(--violet);
+    font-weight:600;
+    flex:0 0 auto;
+    max-width:38%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .cell .item-stack{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:2px;
+    flex:1 1 auto;
+    min-width:0;
+    text-align:right;
+  }
+  .cell .item-line{
+    color:var(--text);
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .cell .qty{color:var(--gold); font-weight:600;}
+  .cell .nothing{color:var(--muted); font-style:italic; font-weight:400;}
+  .cell .cat{
+    color:var(--muted);
+    font-size:9.5px;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .cell .qual{color:var(--gold); font-size:11px;}
+  .cell .scu{color:var(--muted); font-size:11px;}
+
+  .card-footer{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    font-size:10.5px;
+    color:var(--muted);
+    opacity:.7;
+  }
+  .brand-mark{
+    width:16px; height:16px;
+    border-radius:50%;
+    border:1.5px solid var(--muted);
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:8px;
+    color:var(--muted);
+  }
+
+  .callout{
+    max-width:640px;
+    font-size:11px;
+    line-height:1.6;
+    color:var(--page-fg);
+    opacity:.7;
+    text-align:center;
+  }
+  .callout b{color:var(--gold); font-weight:600; opacity:1;}
+</style>
+
+<div class="page-head">
+  <div class="tag">Mockup · not wired up yet</div>
+  <h1>Share-image buttons on the roll result</h1>
+  <p>This is the mockup itself — just the card. Real category/quality formatting, alternating rows, and a fixed row height per entry, matching the app's own entry-list rules. Buttons are labeled but not wired up yet.</p>
+</div>
+
+<div class="card">
+  <div class="card-head-row">
+    <div class="eyebrow"><span class="dot"></span>Loot Distribution</div>
+    <div class="card-actions">
+      <button class="pill-btn download" type="button" aria-label="Download as image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"/>
+          <path d="M7 10l5 5 5-5"/>
+          <path d="M5 21h14"/>
+        </svg>
+        Download
+      </button>
+      <button class="pill-btn copy" type="button" aria-label="Copy image to clipboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="11" height="11" rx="1.5"/>
+          <path d="M5 15V5a1.5 1.5 0 0 1 1.5-1.5H15"/>
+        </svg>
+        Copy to Clipboard
+      </button>
+    </div>
+  </div>
+
+  <h2 class="title">TSG Alpha Loot</h2>
+  <div class="meta">Jul 26, 2026 · 14:32 · 12 participants</div>
+
+  <div class="entries" id="entries"></div>
+
+  <div class="card-footer">
+    <span class="brand-mark">R</span>
+    Generated by LootOps · Ravenhall
+  </div>
+</div>
+
+<p class="callout">
+  Categories now only show up where the name alone doesn't already say it — equipment gets the app's real <b>TYPE / GRADE / CLASS / SIZE</b> code (e.g. <code>COOL / CIV / B / S2</code>), wildlife trophies get their rarity <b>Grade</b> (AAA/AA/A/…), and plain commodities (Gold, Titanium, SLAM…) get nothing, since "Gold (Metal)" doesn't tell you anything "Gold" didn't. Quality is shown in <b>gold</b> too, same as the quality chip — teal isn't used here since it barely appears in the app itself (just focus rings and success messages). Commodities that ship in a box also show their <b>SCU</b> size. Multiples only show a count (<b>3x</b>) when someone actually won more than one of the same thing. Every row's item name, quantity, quality, and SCU are pulled from one shared item list rather than typed per-row, so the data stays internally consistent.
+</p>
+
+<script>
+(function(){
+  // Real TYPE_ABBR / GRADE_ABBR straight from index.html, so the mockup's category
+  // text matches what the app would actually generate for these item types.
+  var TYPE_ABBR = {
+    Shield:'SHLD', QuantumDrive:'QDRV', PowerPlant:'POWR', Cooler:'COOL',
+    FlightController:'FCTL', ShieldController:'SCTL', JumpDrive:'JDRV',
+    Radar:'RADR', SelfDestruct:'SDST', Armor:'ARMR',
+    WeaponGun:'WEAP', Turret:'TURR', WeaponMining:'MINE',
+    MiningModifier:'MMOD', Gadget:'GDGT', SalvageModifier:'SALV'
+  };
+  var GRADE_ABBR = { military:'MIL', civilian:'CIV', competition:'COMP', industrial:'IND', stealth:'STL' };
+
+  function equipCat(type, grade, cls, size){
+    var parts = [TYPE_ABBR[type], GRADE_ABBR[grade], cls ? cls.toUpperCase() : null, size ? 'S' + size : null].filter(Boolean);
+    return parts.join(' / ');
+  }
+
+  // ---- Single source of truth for item data, the same way the app's own Items
+  // list is the one place qty/quality/SCU live for a given item. Every row below
+  // just references an item BY NAME and looks its details up here — nothing about
+  // category, quality, or box size is ever re-typed or re-rolled per participant.
+  var ITEM_CATALOG = {
+    'Gold':            { quality:612, scu:1 },
+    'Beryl':           { quality:745, scu:1 },
+    'Titanium':        { quality:390, scu:2 },
+    'SLAM':            { scu:1 },
+    'Altruciatoxin':   { scu:1 },
+    'Cooler C-8':      { cat:equipCat('Cooler','civilian','B',2) },
+    'P4-AR':           { cat:equipCat('WeaponGun','military','A',null) },
+    'ArgoMole Head':   { cat:equipCat('WeaponMining','industrial','C',3) },
+    'Valakkar Fang':   { cat:'Grade A' },
+    'Valakkar Pearl':  { cat:'Grade AAA' }
+  };
+
+  // Names list + what each name actually won (item + how many). This is the
+  // "roll result" — everything else about an item comes from ITEM_CATALOG above.
+  var NAMES_LIST = ['peter','obsid','yorna','tarn','claus','solace','brox','urso','d4ngrs','fenn','mako','korr'];
+  var WINS = {
+    peter:'Gold×3', obsid:'Beryl', yorna:'Cooler C-8', tarn:'Valakkar Fang',
+    claus:'P4-AR', solace:'Valakkar Pearl', brox:null, urso:null,
+    d4ngrs:'SLAM×2', fenn:'Altruciatoxin×4', mako:'ArgoMole Head', korr:'Titanium'
+  };
+
+  function parseWin(win){
+    if(!win) return { item:null, qty:0 };
+    var m = win.split('×');
+    return { item:m[0], qty:m[1] ? parseInt(m[1], 10) : 1 };
+  }
+
+  var entriesEl = document.getElementById('entries');
+
+  function cellHtml(name){
+    if(!name) return '<div class="cell empty"></div>';
+    var win = parseWin(WINS[name]);
+    var stackHtml;
+    if(!win.item){
+      stackHtml = '<span class="item-line"><span class="nothing">Nothing</span></span>';
+    } else {
+      var def = ITEM_CATALOG[win.item] || {};
+      var bits = [];
+      if(win.qty > 1) bits.push('<span class="qty">' + win.qty + 'x</span>');
+      bits.push(win.item);
+      if(def.quality) bits.push('<span class="qual">Q' + def.quality + '</span>');
+      if(def.scu) bits.push('<span class="scu">' + def.scu + ' SCU</span>');
+      stackHtml = '<span class="item-line">' + bits.join(' ') + '</span>';
+      if(def.cat) stackHtml += '<span class="cat">' + def.cat + '</span>';
+    }
+    return '<div class="cell"><span class="name">' + name + '</span><div class="item-stack">' + stackHtml + '</div></div>';
+  }
+
+  function render(){
+    var html = '';
+    for(var i = 0; i < NAMES_LIST.length; i += 2){
+      var left = NAMES_LIST[i];
+      var right = NAMES_LIST[i + 1] || null;
+      html += '<div class="entry-row">' + cellHtml(left) + cellHtml(right) + '</div>';
+    }
+    entriesEl.innerHTML = html;
+  }
+
+  render();
+})();
+</script>
