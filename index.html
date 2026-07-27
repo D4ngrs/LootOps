@@ -380,7 +380,7 @@ const APP_VERSION = 'v0.9.2';
   }
   .qty-arrow:hover::before{border-color:var(--text);}
   .entry-row-item .qty-input:focus{border-color:#E8A33D;}
-  .info-link{ flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; color: var(--muted); text-decoration: none; font-size: 13px; line-height: 1; transition: color .15s ease; padding: 10px; }
+  .info-link{ flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; color: var(--muted); text-decoration: none; font-size: 16px; line-height: 1; transition: color .15s ease; padding: 12px; }
   .info-link:hover{color:var(--gold);}
   .entry-remove{
     flex:0 0 auto;
@@ -999,6 +999,10 @@ const APP_VERSION = 'v0.9.2';
   #dmScopePrompt button{ margin-right:6px; }
   #dmSaveRow{ margin-top:10px; }
   #dmSaveNote{ display:block; margin-top:4px; color:var(--muted); font-size:11px; }
+  #dmSkipLink{ background:none; border:none; padding:0; color:var(--violet); text-decoration:underline; cursor:pointer; font:inherit; }
+  #dmSkippedList{ list-style:none; margin:6px 0 0; padding:0; max-height:140px; overflow:auto; }
+  #dmSkippedList li{ display:flex; justify-content:space-between; align-items:center; gap:6px; padding:3px 0; border-top:1px solid var(--line); }
+  #dmSkippedList button{ font-size:10px; padding:2px 6px; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -2904,7 +2908,9 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       '</select></div>' +
       '<div class="dm-row"><label>Border radius (px)</label><input type="number" id="dmFieldBorderRadius"></div>' +
       '<div id="dmScopePrompt" class="dm-hidden"></div>' +
-      '<div id="dmSaveRow"><button type="button" id="dmSaveBtn">Save</button><span id="dmSaveNote"></span></div>';
+      '<div id="dmSaveRow"><button type="button" id="dmSaveBtn">Save</button><span id="dmSaveNote"></span>' +
+        '<ul id="dmSkippedList" class="dm-hidden"></ul>' +
+      '</div>';
     document.body.appendChild(inspectorEl);
     inspectorEl.addEventListener('input', onInspectorInput);
     document.getElementById('dmSaveBtn').addEventListener('click', function(){ DesignMode.save(); });
@@ -3165,6 +3171,59 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     return P.patchElementStyleAttr(text, entry.attrName, entry.attrValue, props);
   }
 
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function describeSkippedEntry(entry){
+    return entry.type === 'text' ? 'text → "' + entry.value + '"' : entry.property + ': ' + entry.value;
+  }
+
+  function locateSkippedEntry(entry){
+    const note = document.getElementById('dmSaveNote');
+    const el = entry.attrName ? document.querySelector('[' + entry.attrName + '="' + entry.attrValue + '"]') : null;
+    if (!el){
+      if (note) note.textContent = 'That element is no longer on the page (the list was likely re-rendered since).';
+      return;
+    }
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (highlightEl){
+      const r = el.getBoundingClientRect();
+      highlightEl.style.display = 'block';
+      highlightEl.style.left = r.left + 'px';
+      highlightEl.style.top = r.top + 'px';
+      highlightEl.style.width = r.width + 'px';
+      highlightEl.style.height = r.height + 'px';
+    }
+  }
+
+  function renderSaveResult(appliedCount, skipped){
+    const note = document.getElementById('dmSaveNote');
+    const list = document.getElementById('dmSkippedList');
+    if (!note || !list) return;
+    if (skipped.length === 0){
+      note.textContent = 'Saved ✓';
+      list.classList.add('dm-hidden');
+      list.innerHTML = '';
+      return;
+    }
+    note.innerHTML = 'Saved ' + appliedCount + ' change(s); ' +
+      '<button type="button" id="dmSkipLink">' + skipped.length + ' skipped</button>' +
+      ' (not found in file — likely a dynamically-generated element that can only be previewed, not saved).';
+    list.innerHTML = skipped.map(function(entry, i){
+      return '<li><span>' + escapeHtml(describeSkippedEntry(entry)) + '</span><button type="button" data-skip-idx="' + i + '">Locate</button></li>';
+    }).join('');
+    list.classList.add('dm-hidden');
+    document.getElementById('dmSkipLink').onclick = function(){
+      list.classList.toggle('dm-hidden');
+    };
+    list.querySelectorAll('button[data-skip-idx]').forEach(function(btn){
+      btn.onclick = function(){ locateSkippedEntry(skipped[Number(btn.dataset.skipIdx)]); };
+    });
+  }
+
   async function save(){
     const note = document.getElementById('dmSaveNote');
     try {
@@ -3186,11 +3245,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       await writable.write(text);
       await writable.close();
       DesignMode.changeLog = skipped;
-      if (note){
-        note.textContent = skipped.length === 0
-          ? 'Saved ✓'
-          : 'Saved ' + appliedCount + ' change(s); ' + skipped.length + ' skipped (not found in file — likely a dynamically-generated element that can only be previewed, not saved).';
-      }
+      renderSaveResult(appliedCount, skipped);
     } catch (err){
       if (note) note.textContent = 'Save failed: ' + err.message;
     }
