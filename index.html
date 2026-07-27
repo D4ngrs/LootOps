@@ -212,15 +212,13 @@ const APP_VERSION = 'v0.9.2';
     flex:0 0 165px;
     width:165px;
     display:block;
-    overflow:hidden;
   }
   #itemsList .entry-name-text,
   #itemsList .entry-detail-text{
     display:block;
     width:100%;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    white-space:normal;
+    overflow-wrap:break-word;
   }
   #itemsList .entry-detail-text{margin-top:1px;}
   .trailing-controls{
