@@ -3391,6 +3391,30 @@ rollBtn.addEventListener('click', () => {
   }, 420);
 });
 
+undoRollBtn.addEventListener('click', async () => {
+  if(!await confirmModal('Undo the last roll? This removes it from history.', 'Undo last roll')) return;
+
+  const entries = loadHistory();
+  const entry = entries.pop();
+  if(!entry) return; // button shouldn't be visible/clickable with no history, but guard anyway
+
+  saveHistory(entries);
+  setLastRollUndone(true);
+  renderHistory();
+  if(!historyOverlay.classList.contains('hidden')) renderHistoryModalList();
+
+  results.innerHTML = '';
+  resultsTitleEl.textContent = '';
+  lastRollResult = null;
+  shareBtn.disabled = true;
+  shareBtn.classList.remove('ready');
+
+  if(entry.postedToDiscord){
+    const webhookUrl = loadWebhookUrl();
+    if(webhookUrl) postUndoToDiscord(webhookUrl, entry);
+  }
+});
+
 // ---- Star Citizen Wiki item search ----
 const WIKI_CATEGORIES = {
   components: 'https://api.star-citizen.wiki/api/items?filter[type]=Shield,QuantumDrive,PowerPlant,Cooler,FlightController,ShieldController,JumpDrive,Radar,SelfDestruct,Armor&per_page=100',
