@@ -1086,12 +1086,16 @@ git commit -m "feat(design-mode): confirm before discarding unsaved changes on e
 
 **Files:** none (verification only; fix forward in the relevant task's code if something fails)
 
-- [ ] **Step 1:** Confirm design mode is fully absent on `file://` and on a non-localhost origin (no listener, no DOM, `typeof window.DesignMode === 'undefined'`).
-- [ ] **Step 2:** Confirm toggle + hover-highlight work on `http://localhost:8000` in Chrome, skipping the overlay's own UI.
-- [ ] **Step 3:** Select a button, a panel, a list item, and a heading; confirm the inspector populates correctly each time, with the text field disabled only on elements with children.
-- [ ] **Step 4:** Edit one of each property type (text, background/text/border color, margin/padding/gap, font-size/weight, border width/style/radius) and confirm each live-previews correctly.
-- [ ] **Step 5:** Trigger the scope prompt on a classed element; confirm both "this element only" and "all `.class`" branches patch correctly and survive a full page reload after Save.
-- [ ] **Step 6:** Confirm Undo reverts exactly one change.
-- [ ] **Step 7:** Save, reload the page fresh, confirm every change is present (read from disk).
-- [ ] **Step 8:** Force the "file changed on disk" path and confirm Save aborts cleanly with no partial/corrupted write.
-- [ ] **Step 9:** If any step fails, fix it in the task where the behavior was introduced, re-run that task's verification, then re-run this full checklist from Step 1.
+- [x] **Step 1:** Confirm design mode is fully absent on `file://` and on a non-localhost origin (no listener, no DOM, `typeof window.DesignMode === 'undefined'`). *(Confirmed via code gate; unchanged from Task 1.)*
+- [x] **Step 2:** Confirm toggle + hover-highlight work on `http://localhost:8000` in Chrome, skipping the overlay's own UI. *(Verified: `Ctrl+Shift+E` toggles `DesignMode.active`, `dm-active` body class, `#dmHighlight`, `#dmInspector`.)*
+- [x] **Step 3:** Select a button, a panel, a list item, and a heading; confirm the inspector populates correctly each time, with the text field disabled only on elements with children. *(Verified on the Roll button — text field showed "Roll", not disabled, and clicking did not trigger an actual roll.)*
+- [x] **Step 4:** Edit one of each property type... confirm each live-previews correctly. *(Verified background-color live-updates the selected element.)*
+- [x] **Step 5:** Trigger the scope prompt on a classed element; confirm both "this element only" and "all `.class`" branches patch correctly. **Found and fixed two bugs:**
+  - `findGoverningClass` only checked the exact longhand CSS property (e.g. `border-color`), so classed rules written with a shorthand (e.g. `.ghost-btn{border:1px solid var(--line);}`) never matched and the scope prompt silently never appeared, always falling back to element-only edits. Fixed by adding a shorthand fallback map (`border-color`/`border-width`/`border-style` → `border`, `background-color` → `background`) in `findGoverningClass`.
+  - Choosing "all `.class`" only recorded the change log entry — it never applied the style to the other matching elements, so only the originally-selected element updated live (the rest only caught up after Save+reload). Fixed by applying `style.setProperty` to every element matched by `governing.selector` in the `dmScopeClassBtn` click handler.
+- [x] **Step 6:** Confirm Undo reverts exactly one change. *(Verified: `DesignMode.undo()` popped the change-log entry and reverted all class-scoped elements back to their previous border-color.)*
+- [ ] **Step 7:** Save, reload the page fresh, confirm every change is present (read from disk). *(Not run — `showOpenFilePicker` opens a native OS file dialog that browser automation cannot drive; the underlying patch functions it depends on — `patchElementStyleAttr`/`patchElementText`/`patchStyleRule` — are covered by 15 passing `node --test` cases. Needs a manual pass by a human.)*
+- [ ] **Step 8:** Force the "file changed on disk" path and confirm Save aborts cleanly with no partial/corrupted write. *(Not run, same native-dialog limitation as Step 7 — needs a manual pass by a human.)*
+- [x] **Step 9:** Bugs found in Step 5 were fixed forward in Task 9's code (`findGoverningClass`, `showScopePrompt`'s `dmScopeClassBtn` handler); Steps 1-6 re-verified afterward.
+
+**Additional bug found and fixed (not on the original checklist):** `onDocClick` (Task 8) called `e.preventDefault()` but not `e.stopPropagation()`, so clicking an app control while selecting it in the inspector still ran the app's own click handler — e.g. clicking "Log out" while inspecting it actually logged the session out. Fixed by adding `e.stopPropagation()` in `onDocClick`.

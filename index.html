@@ -2952,6 +2952,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     const el = e.target;
     if (isOwnUi(el)) return;
     e.preventDefault();
+    e.stopPropagation();
     populateInspector(el);
   }
 
@@ -2964,10 +2965,16 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
     });
   }
 
+  const SHORTHAND_FALLBACK = {
+    'border-color': 'border', 'border-width': 'border', 'border-style': 'border',
+    'background-color': 'background'
+  };
+
   function findGoverningClass(el, property){
     if (!el.className || typeof el.className !== 'string') return null;
     const classes = el.className.trim().split(/\s+/).filter(Boolean);
     const camel = camelCase(property);
+    const shorthandCamel = SHORTHAND_FALLBACK[property] ? camelCase(SHORTHAND_FALLBACK[property]) : null;
     for (const sheet of document.styleSheets){
       let rules;
       try { rules = sheet.cssRules; } catch (e) { continue; }
@@ -2976,7 +2983,7 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
         const matchedClass = classes.find(function(c){ return rule.selectorText.indexOf('.' + c) !== -1; });
         if (!matchedClass) continue;
         if (!el.matches(rule.selectorText)) continue;
-        if (rule.style[camel]) return { selector: '.' + matchedClass, className: matchedClass };
+        if (rule.style[camel] || (shorthandCamel && rule.style[shorthandCamel])) return { selector: '.' + matchedClass, className: matchedClass };
       }
     }
     return null;
@@ -2994,6 +3001,9 @@ document.getElementById('copyYear').textContent = new Date().getFullYear();
       box.classList.add('dm-hidden');
     };
     document.getElementById('dmScopeClassBtn').onclick = function(){
+      document.querySelectorAll(governing.selector).forEach(function(elm){
+        elm.style.setProperty(property, value);
+      });
       finalizeEdit(null, null, property, value, previous, 'class', governing.className);
       box.classList.add('dm-hidden');
     };
