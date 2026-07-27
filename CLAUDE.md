@@ -16,7 +16,7 @@ It's a loot-distribution tool for a Star Citizen org: participants ("names") and
   ```js
   const APP_VERSION = 'v0.9.2';
   ```
-  It's displayed on the login screen and page footer. **Do not bump this, and do not add/edit a `CHANGELOG_ENTRIES` entry, unless the user explicitly asks for it** — even right after shipping a user-visible change. When asked to write one, follow the existing changelog writing-style conventions (plain language, "now" phrasing, only user-facing changes, short bullets).
+  It's displayed on the login screen and page footer. **Do not bump this, and do not add/edit a `CHANGELOG_ENTRIES` entry, unless the user explicitly asks for it** — even right after shipping a user-visible change. When asked to write one: plain language (no jargon), never address the user directly ("you"/"your"), prefix each bullet with `Added:`/`Changed:`/`Fixed:`, only list real user-facing impact, and give genuinely new features (`Added:`) 1-2 sentences of real detail rather than a generic one-liner — routine fixes/tweaks stay short.
 
 ## Architecture (single file, roughly top-to-bottom)
 
