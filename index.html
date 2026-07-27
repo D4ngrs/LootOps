@@ -2877,6 +2877,16 @@ function saveHistory(entries){
   try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(entries)); }catch(e){ /* storage unavailable, ignore */ }
 }
 
+const LAST_UNDONE_KEY = 'rollcall_last_undone_v1';
+
+function loadLastRollUndone(){
+  try{ return localStorage.getItem(LAST_UNDONE_KEY) === 'true'; }
+  catch(e){ return false; }
+}
+function setLastRollUndone(value){
+  try{ localStorage.setItem(LAST_UNDONE_KEY, String(!!value)); }catch(e){ /* storage unavailable, ignore */ }
+}
+
 const HISTORY_PREVIEW_COUNT = 2;
 const historyMoreBtn = document.getElementById('historyMoreBtn');
 
@@ -2966,7 +2976,7 @@ function renderHistoryModalList(){
   older.forEach(entry => container.appendChild(createHistoryEntryDiv(entry)));
 }
 
-function logRoll(names, buckets, leftover, title, when, itemsSnapshot){
+function logRoll(names, buckets, leftover, title, when, itemsSnapshot, postedToDiscord){
   const entries = loadHistory();
   entries.push({
     when: when || new Date().toLocaleString(),
@@ -2974,9 +2984,11 @@ function logRoll(names, buckets, leftover, title, when, itemsSnapshot){
     names,
     buckets,
     leftover,
-    itemsSnapshot: itemsSnapshot || []
+    itemsSnapshot: itemsSnapshot || [],
+    postedToDiscord: !!postedToDiscord
   });
   saveHistory(entries);
+  setLastRollUndone(false);
   renderHistory();
   if(!historyOverlay.classList.contains('hidden')) renderHistoryModalList();
 }
@@ -2984,6 +2996,7 @@ function logRoll(names, buckets, leftover, title, when, itemsSnapshot){
 document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
   if(await confirmModal('Clear all saved roll history? This can\'t be undone.', 'Clear history')){
     saveHistory([]);
+    setLastRollUndone(false);
     renderHistory();
   }
 });
@@ -3344,8 +3357,10 @@ rollBtn.addEventListener('click', () => {
     // Taken once, right here, so the result cards, the history entry, and the share
     // card all agree on exactly the same quality/SCU/category data for this roll.
     const itemsSnapshot = snapshotItemsForRoll();
+    const webhookUrl = loadWebhookUrl();
+    const willPostToDiscord = !!(webhookUrl && discordEnabled.checked);
     render(names, buckets, leftover, title, itemsSnapshot);
-    logRoll(names, buckets, leftover, title, when, itemsSnapshot);
+    logRoll(names, buckets, leftover, title, when, itemsSnapshot, willPostToDiscord);
     rollBtn.disabled = false;
 
     lastRollResult = {
@@ -3356,8 +3371,7 @@ rollBtn.addEventListener('click', () => {
     shareBtn.disabled = false;
     shareBtn.classList.add('ready');
 
-    const webhookUrl = loadWebhookUrl();
-    if(webhookUrl && discordEnabled.checked){
+    if(willPostToDiscord){
       postRollToDiscord(webhookUrl, {
         title, when, names, buckets, leftover,
         itemsSnapshot: itemsArr.map(it => ({ label: it.label || it.name, qty: it.qty })),
