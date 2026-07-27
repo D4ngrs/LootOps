@@ -172,6 +172,7 @@ const APP_VERSION = 'v0.9.2';
     flex:0 0 auto;
     height:250px;
     overflow-y:auto;
+    scrollbar-gutter:stable;
     scrollbar-width:thin;
     scrollbar-color:var(--muted) transparent;
   }
@@ -223,12 +224,14 @@ const APP_VERSION = 'v0.9.2';
     white-space:nowrap;
   }
   #itemsList .entry-detail-text{margin-top:1px;}
+  #itemsList .entry-row-item{gap:7px;}
   .trailing-controls{
     display:flex;
     align-items:center;
     gap:6px;
     margin-left:auto;
   }
+  #itemsList .trailing-controls{gap:3px;}
   .qty-remove-group{
     display:flex;
     align-items:center;
