@@ -701,12 +701,19 @@ const APP_VERSION = 'v0.8.5';
     border-radius:8px;
     padding:10px 14px;
   }
+  .changelog-entry.current{border-color:var(--gold);}
   .changelog-entry .changelog-version{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
     font-size:12.5px;
     color:var(--gold);
     margin-bottom:6px;
+  }
+  .changelog-current-tag{
+    font-weight:300;
+    font-style:italic;
+    color:var(--muted);
+    font-size:10.5px;
   }
   .changelog-entry ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px;}
   .changelog-entry li{font-size:11.5px; line-height:1.5; color:var(--text);}
@@ -778,6 +785,43 @@ const APP_VERSION = 'v0.8.5';
   .history-scroll::-webkit-scrollbar-track{background:transparent;}
   .history-scroll::-webkit-scrollbar-thumb{background:var(--muted); border-radius:3px;}
   .history-scroll::-webkit-scrollbar-thumb:hover{background:var(--text);}
+
+  .changelog-scroll-wrap{position:relative;}
+  .changelog-scroll{
+    height:320px; /* fixed, unlike .history-scroll's max-height — stays the same size regardless of entry count */
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding-right:8px;
+  }
+  /* Same thin scrollbar as the other modals, but hidden until actually scrolling/hovering —
+     matches the page's own floating-scrollbar-thumb behavior instead of sitting on screen at rest. */
+  .changelog-scroll{scrollbar-width:thin; scrollbar-color:transparent transparent;}
+  .changelog-scroll:hover, .changelog-scroll.scrolling{scrollbar-color:var(--muted) transparent;}
+  .changelog-scroll::-webkit-scrollbar{width:6px;}
+  .changelog-scroll::-webkit-scrollbar-track{background:transparent;}
+  .changelog-scroll::-webkit-scrollbar-thumb{background:transparent; border-radius:3px;}
+  .changelog-scroll:hover::-webkit-scrollbar-thumb, .changelog-scroll.scrolling::-webkit-scrollbar-thumb{background:var(--muted);}
+  .changelog-scroll::-webkit-scrollbar-thumb:hover{background:var(--text);}
+
+  /* "More below" hint — a bottom fade with a chevron, shown only while there's
+     unscrolled content beneath the fold; fades out once you reach the bottom. */
+  .changelog-more-hint{
+    position:absolute;
+    left:0; right:8px; bottom:0;
+    height:32px;
+    background:linear-gradient(to bottom, transparent, var(--panel));
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding-bottom:2px;
+    pointer-events:none;
+    opacity:1;
+    transition:opacity .2s ease;
+  }
+  .changelog-more-hint.hidden{opacity:0;}
+  .changelog-more-hint svg{width:14px; height:14px; color:var(--muted);}
 
   #loginGate{
     position:fixed;
@@ -1163,7 +1207,14 @@ const APP_VERSION = 'v0.8.5';
         <div class="modal-title">Changelog</div>
         <button type="button" class="modal-close" id="closeChangelogBtn">×</button>
       </div>
-      <div class="history-scroll" id="changelogList"></div>
+      <div class="changelog-scroll-wrap">
+        <div class="changelog-scroll" id="changelogList"></div>
+        <div class="changelog-more-hint hidden" id="changelogMoreHint">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2288,15 +2339,22 @@ const changelogOverlay = document.getElementById('changelogOverlay');
 const changelogBtn = document.getElementById('changelogBtn');
 const closeChangelogBtn = document.getElementById('closeChangelogBtn');
 const changelogListEl = document.getElementById('changelogList');
+const changelogMoreHint = document.getElementById('changelogMoreHint');
 
 function renderChangelogList(){
   changelogListEl.innerHTML = '';
-  CHANGELOG_ENTRIES.forEach(entry => {
+  CHANGELOG_ENTRIES.forEach((entry, i) => {
     const card = document.createElement('div');
-    card.className = 'changelog-entry';
+    card.className = 'changelog-entry' + (i === 0 ? ' current' : '');
     const version = document.createElement('div');
     version.className = 'changelog-version';
     version.textContent = entry.version;
+    if(i === 0){
+      const tag = document.createElement('span');
+      tag.className = 'changelog-current-tag';
+      tag.textContent = ' - current version';
+      version.appendChild(tag);
+    }
     card.appendChild(version);
     const ul = document.createElement('ul');
     entry.changes.forEach(change => {
@@ -2309,9 +2367,24 @@ function renderChangelogList(){
   });
 }
 
+const CHANGELOG_NEAR_BOTTOM_PX = 12;
+let changelogScrollHideTimer = null;
+function updateChangelogMoreHint(){
+  const atBottom = changelogListEl.scrollTop + changelogListEl.clientHeight >= changelogListEl.scrollHeight - CHANGELOG_NEAR_BOTTOM_PX;
+  changelogMoreHint.classList.toggle('hidden', atBottom);
+}
+changelogListEl.addEventListener('scroll', () => {
+  updateChangelogMoreHint();
+  changelogListEl.classList.add('scrolling');
+  clearTimeout(changelogScrollHideTimer);
+  changelogScrollHideTimer = setTimeout(() => changelogListEl.classList.remove('scrolling'), 700);
+});
+
 function openChangelogModal(){
   renderChangelogList();
   changelogOverlay.classList.remove('hidden');
+  changelogListEl.scrollTop = 0;
+  updateChangelogMoreHint();
   lockBodyScroll();
 }
 function closeChangelogModal(){
