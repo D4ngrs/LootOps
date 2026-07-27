@@ -537,8 +537,26 @@ const APP_VERSION = 'v0.8.1';
   #rollBtn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(232,163,61,0.25);}
   #rollBtn:active{transform:translateY(0px);}
   #rollBtn:disabled{opacity:.6; cursor:default; transform:none; box-shadow:none;}
-  #undoRollBtn{display:flex; align-items:center; gap:6px; border-color:var(--bad); color:var(--bad);}
-  #undoRollBtn:hover{background:rgba(232,99,106,0.12); color:var(--text);}
+  #undoRollBtn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:#14151A;
+    background:linear-gradient(135deg, var(--bad), #EF9297);
+    border:none;
+    border-radius:8px;
+    padding:12px 22px;
+    cursor:pointer;
+    box-shadow:0 0 0 rgba(232,99,106,0);
+    transition:transform .12s ease, box-shadow .2s ease;
+  }
+  #undoRollBtn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(232,99,106,0.25);}
+  #undoRollBtn:active{transform:translateY(0px);}
   #undoRollBtn.hidden{display:none;}
 
   /* Dark/inert until a roll exists, then flips to the exact same gold treatment as
@@ -1617,7 +1635,7 @@ const APP_VERSION = 'v0.8.1';
   </div>
 
   <div class="roll-row">
-    <button id="undoRollBtn" type="button" class="ghost-btn hidden">↺ Undo last roll</button>
+    <button id="undoRollBtn" type="button" class="hidden">↺ Undo last roll</button>
     <button id="rollBtn">Roll</button>
     <button id="shareBtn" type="button" disabled aria-label="Share result">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
