@@ -3154,6 +3154,7 @@ const WEBHOOK_KEY = 'rollcall_webhook_v1';
 const WEBHOOK_ENABLED_KEY = 'rollcall_webhook_enabled_v1';
 const EMBED_COLOR = 0xE8A33D; // matches --gold, used for the main setup embed
 const EMBED_COLOR_RESULTS = 0x7C6FF0; // matches --violet, used for the results embed
+const EMBED_COLOR_UNDO = 0xE8636A; // matches --bad, used for the undo-notice embed
 
 function loadWebhookEnabled(){
   try{
@@ -3331,6 +3332,24 @@ async function postRollToDiscord(url, data){
     discordStatusEl.textContent = 'Could not reach Discord to post the roll.';
     discordStatusEl.className = 'err';
   }
+}
+
+async function postUndoToDiscord(url, entry){
+  const embed = {
+    title: 'Roll Undone',
+    color: EMBED_COLOR_UNDO,
+    fields: [
+      { name: 'Roll', value: escDiscord(entry.title || 'Untitled Roll'), inline: false },
+      { name: 'Originally Posted', value: escDiscord(entry.when), inline: false }
+    ]
+  };
+  try{
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] })
+    });
+  }catch(e){ /* silent — the local undo already succeeded regardless of Discord reachability */ }
 }
 
 // Discord uses simple markdown — escape characters that would otherwise format unexpectedly
