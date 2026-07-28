@@ -2605,7 +2605,7 @@ function addOrIncrementItem(raw, meta){
   if(!name) return;
   const idx = itemsArr.findIndex(it => it.name.toLowerCase() === name.toLowerCase());
   if(idx >= 0){
-    itemsArr[idx].qty += 1;
+    itemsArr[idx].qty = Math.min(MAX_ITEM_QTY, itemsArr[idx].qty + 1);
   } else {
     const { base, variant } = splitTrailingParenthetical(name);
     const detail = variant ? `(${variant})` : buildDetailSuffix(meta);
