@@ -809,8 +809,8 @@ const APP_VERSION = 'v0.8.2';
   /* Major-release outline only shows up once a version is no longer current -- the
      current version's own gold outline (below) always wins, since it comes later in
      the cascade at the same specificity. */
-  .changelog-entry.major{border-color:var(--violet);}
-  .changelog-entry.current{border-color:var(--gold);}
+  .changelog-entry.major{border-color:var(--violet); box-shadow:inset 0 0 16px rgba(124,111,240,0.35);}
+  .changelog-entry.current{border-color:var(--gold); box-shadow:none;}
   .changelog-entry .changelog-version{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
