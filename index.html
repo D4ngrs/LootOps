@@ -570,7 +570,9 @@ const APP_VERSION = 'v0.8.2';
     pointer-events:none;
     z-index:0;
   }
-  #undoRollBtn .btn-bg-icon{width:58px; height:58px;}
+  /* Same rotate-ccw path as Roll's shuffle/Share's link icon family, just spun so
+     the opening and arrowhead sit at the top instead of the path's default lower-left. */
+  #undoRollBtn .btn-bg-icon{width:58px; height:58px; transform:translate(-50%,-50%) rotate(130deg);}
   #shareBtn .btn-bg-icon{width:60px; height:60px;}
   #rollBtn .btn-bg-icon{width:58px; height:58px;}
   .btn-label{position:relative; z-index:1;}
