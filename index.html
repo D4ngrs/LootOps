@@ -570,7 +570,7 @@ const APP_VERSION = 'v0.8.2';
     pointer-events:none;
     z-index:0;
   }
-  #undoRollBtn .btn-bg-icon{font-size:68px; line-height:1;}
+  #undoRollBtn .btn-bg-icon{width:58px; height:58px;}
   #shareBtn .btn-bg-icon{width:60px; height:60px;}
   #rollBtn .btn-bg-icon{width:58px; height:58px;}
   .btn-label{position:relative; z-index:1;}
@@ -1651,7 +1651,10 @@ const APP_VERSION = 'v0.8.2';
 
   <div class="roll-row">
     <button id="undoRollBtn" type="button" class="hidden">
-      <span class="btn-bg-icon" aria-hidden="true">↺</span>
+      <svg class="btn-bg-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      </svg>
       <span class="btn-label">Undo roll</span>
     </button>
     <button id="rollBtn">
