@@ -2199,6 +2199,9 @@ document.addEventListener('keydown', e => {
 
 let namesArr = [];       // array of strings
 let itemsArr = [];       // array of { name, qty, meta, label }
+// Roll expands each item into `qty` array entries in one shot (see rollBtn handler) —
+// an unbounded qty here can allocate enough memory to crash the tab.
+const MAX_ITEM_QTY = 500;
 
 function renderNamesList(){
   namesListEl.innerHTML = '';
@@ -2531,12 +2534,13 @@ function renderItemsList(){
     const qtyInput = document.createElement('input');
     qtyInput.type = 'number';
     qtyInput.min = '1';
+    qtyInput.max = String(MAX_ITEM_QTY);
     qtyInput.className = 'qty-input';
     qtyInput.value = item.qty;
     qtyInput.title = 'How many times this item is rolled';
 
     function setQty(v){
-      v = Math.max(1, v || 1);
+      v = Math.min(MAX_ITEM_QTY, Math.max(1, v || 1));
       itemsArr[i].qty = v;
       qtyInput.value = v;
       itemCount.textContent = itemsArr.reduce((sum, it) => sum + it.qty, 0);
@@ -3508,7 +3512,7 @@ rollBtn.addEventListener('click', () => {
   discordStatusEl.textContent = '';
   const names = namesArr.slice();
   const items = [];
-  itemsArr.forEach(({ name, qty }) => { for(let i = 0; i < qty; i++) items.push(name); });
+  itemsArr.forEach(({ name, qty }) => { for(let i = 0; i < Math.min(qty, MAX_ITEM_QTY); i++) items.push(name); });
   const title = rollTitleInput.value.trim();
 
   if(names.length === 0){ errorEl.textContent = 'Add at least one name.'; return; }
