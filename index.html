@@ -561,7 +561,7 @@ const APP_VERSION = 'v0.8.2';
 
   /* Shared by #undoRollBtn/#shareBtn: a big, low-opacity icon centered behind the
      label, filling the button as a watermark rather than sitting inline with the text. */
-  #undoRollBtn, #shareBtn{position:relative; overflow:hidden;}
+  #rollBtn, #undoRollBtn, #shareBtn{position:relative; overflow:hidden;}
   .btn-bg-icon{
     position:absolute;
     top:50%; left:50%;
@@ -572,6 +572,7 @@ const APP_VERSION = 'v0.8.2';
   }
   #undoRollBtn .btn-bg-icon{font-size:68px; line-height:1;}
   #shareBtn .btn-bg-icon{width:60px; height:60px;}
+  #rollBtn .btn-bg-icon{width:58px; height:58px;}
   .btn-label{position:relative; z-index:1;}
 
   /* Dark/inert until a roll exists, then flips to the exact same gold treatment as
@@ -1653,7 +1654,16 @@ const APP_VERSION = 'v0.8.2';
       <span class="btn-bg-icon" aria-hidden="true">↺</span>
       <span class="btn-label">Undo roll</span>
     </button>
-    <button id="rollBtn">Roll</button>
+    <button id="rollBtn">
+      <svg class="btn-bg-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 3 21 3 21 8"/>
+        <line x1="4" y1="20" x2="21" y2="3"/>
+        <polyline points="21 16 21 21 16 21"/>
+        <line x1="15" y1="15" x2="21" y2="21"/>
+        <line x1="4" y1="4" x2="9" y2="9"/>
+      </svg>
+      <span class="btn-label">Roll</span>
+    </button>
     <button id="shareBtn" type="button" disabled aria-label="Share result">
       <svg class="btn-bg-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 15l6-6"/>
